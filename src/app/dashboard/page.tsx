@@ -4,8 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BarChart2, Edit, Users, Zap } from 'lucide-react';
-import Image from 'next/image';
+import { Zap, Edit } from 'lucide-react'; // Removed BarChart2, Users
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -28,28 +27,8 @@ export default function DashboardPage() {
             <Zap className="h-5 w-5 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 since last week</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Ad Spend</CardTitle>
-            <BarChart2 className="h-5 w-5 text-accent" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$15,231.89</div>
-            <p className="text-xs text-muted-foreground">+15.2% from last month</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Leads</CardTitle>
-            <Users className="h-5 w-5 text-accent" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
-            <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">Currently live campaigns</p>
           </CardContent>
         </Card>
         <Card className="hover:shadow-lg transition-shadow">
@@ -58,8 +37,8 @@ export default function DashboardPage() {
             <Edit className="h-5 w-5 text-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">Check submissions queue</p>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">Submissions awaiting review</p>
           </CardContent>
         </Card>
       </div>
@@ -86,28 +65,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="font-headline text-primary">Recent Activity</CardTitle>
-            <CardDescription>Overview of your latest updates.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              <li className="flex items-center text-sm">
-                <Image src="https://placehold.co/32x32.png" alt="Activity icon" width={32} height={32} className="rounded-full mr-3" data-ai-hint="update new"/>
-                <span>New ad concept "Summer Sale Blitz" created.</span>
-              </li>
-              <li className="flex items-center text-sm">
-                <Image src="https://placehold.co/32x32.png" alt="Activity icon" width={32} height={32} className="rounded-full mr-3" data-ai-hint="data chart"/>
-                <span>Campaign "Q2 Growth" iteration 3 results are in.</span>
-              </li>
-               <li className="flex items-center text-sm">
-                <Image src="https://placehold.co/32x32.png" alt="Activity icon" width={32} height={32} className="rounded-full mr-3" data-ai-hint="user profile"/>
-                <span>User profile "Tech Savvy Millenial" updated.</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+        {/* Recent Activity card removed as it was purely placeholder */}
       </div>
     </div>
   );
