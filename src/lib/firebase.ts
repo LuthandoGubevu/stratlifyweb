@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -11,7 +12,7 @@ const firebaseConfig = {
   projectId: "stratifyai-d82ce",
   storageBucket: "stratifyai-d82ce.appspot.com",
   messagingSenderId: "716269216529",
-  appId: "1:716269216529:web:f5a20f79f72e48a29f62b0", // Using appId from your guide
+  appId: "1:716269216529:web:f5a20f79f72e48a29f62b0",
   measurementId: "G-RRPPBQV3MY"
 };
 
