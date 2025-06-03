@@ -22,7 +22,7 @@ export function UserNav() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/login');
+    router.push('/'); // Redirect to landing page
   };
 
   const getInitials = (name: string | null | undefined) => {
