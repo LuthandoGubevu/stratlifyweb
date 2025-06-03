@@ -1,19 +1,39 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
+// Import getAnalytics and isSupported specifically
+import { getAnalytics as getFirebaseAnalytics, isSupported as isAnalyticsSupported, type Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "YOUR_API_KEY",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "YOUR_AUTH_DOMAIN",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "YOUR_PROJECT_ID",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "YOUR_STORAGE_BUCKET",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "YOUR_MESSAGING_SENDER_ID",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "YOUR_APP_ID",
+  apiKey: "AIzaSyBCF0I2mGDVXLvorGYx-wfYLkdSp86nrYw",
+  authDomain: "stratifyai-d82ce.firebaseapp.com",
+  projectId: "stratifyai-d82ce",
+  storageBucket: "stratifyai-d82ce.appspot.com",
+  messagingSenderId: "716269216529",
+  appId: "1:716269216529:web:f5a20f79f72e48a29f62b0", // Using appId from your guide
+  measurementId: "G-RRPPBQV3MY"
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app);
 
-export { app, auth, db };
+// Declare analytics, it will be null on the server or if not supported/initialized on client
+let analytics: Analytics | null = null;
+
+// Initialize analytics only on the client side and if supported
+if (typeof window !== 'undefined') {
+  isAnalyticsSupported().then((supported) => {
+    if (supported) {
+      analytics = getFirebaseAnalytics(app);
+    } else {
+      console.log("Firebase Analytics is not supported in this browser.");
+    }
+  }).catch(err => {
+    console.error("Error checking Firebase Analytics support:", err);
+  });
+}
+
+export { app, auth, db, storage, analytics };
