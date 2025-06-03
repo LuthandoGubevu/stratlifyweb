@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +12,7 @@ import {
   Tags,
   Map,
   PenSquare,
-  MousePointerSquare,
+  MousePointerClick, // Changed from MousePointerSquare
   Repeat,
   Sparkles,
   Send,
@@ -52,7 +53,7 @@ const navItems = [
       { href: '/dashboard/master-fields', label: 'Master Fields', icon: Tags },
       { href: '/dashboard/creative-roadmap', label: 'Creative Roadmap', icon: Map },
       { href: '/dashboard/headline-patterns', label: 'Headline Patterns', icon: PenSquare },
-      { href: '/dashboard/ad-creation', label: 'Ad Creation', icon: MousePointerSquare },
+      { href: '/dashboard/ad-creation', label: 'Ad Creation', icon: MousePointerClick }, // Changed from MousePointerSquare
       { href: '/dashboard/iteration-tracker', label: 'Iteration Tracker', icon: Repeat },
       { href: '/dashboard/mechanization', label: 'Mechanization', icon: Sparkles },
       { href: '/dashboard/submissions', label: 'Submissions', icon: Send },
