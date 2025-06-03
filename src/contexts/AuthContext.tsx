@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User } from 'firebase/auth';
@@ -47,7 +48,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return userCredential.user;
     } catch (e) {
       const err = e as FirebaseError;
-      setError(err.message || 'Failed to sign in.');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('Invalid email or password. Please try again.');
+      } else {
+        setError(err.message || 'Failed to sign in.');
+      }
       setLoading(false);
       return null;
     }
@@ -66,7 +71,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return userCredential.user;
     } catch (e) {
       const err = e as FirebaseError;
-      setError(err.message || 'Failed to create account.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email address is already in use. Please try a different email or log in.');
+      } else {
+        setError(err.message || 'Failed to create account.');
+      }
       setLoading(false);
       return null;
     }
