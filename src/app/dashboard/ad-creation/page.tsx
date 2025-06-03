@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -119,9 +120,9 @@ export default function AdCreationPage() {
               <AccordionItem value="item-1">
                 <AccordionTrigger className="font-semibold">Basic Information</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <FormField control={form.control} name="batchDctNumber" render={({ field }) => ( <FormItem> <FormLabel>Batch / DCT #</FormLabel> <FormControl> <Input placeholder="e.g., B001 / DCT005" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="adConcept" render={({ field }) => ( <FormItem> <FormLabel>Ad Concept</FormLabel> <FormControl> <Input placeholder="Enter the core ad concept" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="productDescription" render={({ field }) => ( <FormItem> <FormLabel>Product Description</FormLabel> <FormControl> <Textarea placeholder="Describe the product in detail" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="batchDctNumber" render={({ field }) => ( <FormItem> <FormLabel>Batch / DCT #</FormLabel> <FormControl><Input placeholder="e.g., B001 / DCT005" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="adConcept" render={({ field }) => ( <FormItem> <FormLabel>Ad Concept</FormLabel> <FormControl><Input placeholder="Enter the core ad concept" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="productDescription" render={({ field }) => ( <FormItem> <FormLabel>Product Description</FormLabel> <FormControl><Textarea placeholder="Describe the product in detail" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </AccordionContent>
               </AccordionItem>
 
@@ -137,21 +138,21 @@ export default function AdCreationPage() {
               <AccordionItem value="item-3">
                 <AccordionTrigger className="font-semibold">Hooks & Angles</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <FormField control={form.control} name="hookPatterns" render={() => ( <FormItem> <FormLabel>Hook Patterns</FormLabel> <div className="grid grid-cols-2 md:grid-cols-3 gap-4"> {hookPatternOptions.map((item) => ( <FormField key={item.id} control={form.control} name="hookPatterns" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0"> <FormControl> <Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange( field.value?.filter( (value) => value !== item.id ) ); }} /> </FormControl> <FormLabel className="font-normal">{item.label}</FormLabel> </FormItem> )} /> ))} </div> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="hook1" render={({ field }) => ( <FormItem> <FormLabel>Hook #1</FormLabel> <FormControl> <Textarea placeholder="Enter Hook #1" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="hook2" render={({ field }) => ( <FormItem> <FormLabel>Hook #2</FormLabel> <FormControl> <Textarea placeholder="Enter Hook #2" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="hook3" render={({ field }) => ( <FormItem> <FormLabel>Hook #3</FormLabel> <FormControl> <Textarea placeholder="Enter Hook #3" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="hookPatterns" render={() => ( <FormItem> <FormLabel>Hook Patterns</FormLabel> <div className="grid grid-cols-2 md:grid-cols-3 gap-4"> {hookPatternOptions.map((item) => ( <FormField key={item.id} control={form.control} name="hookPatterns" render={({ field }) => ( <FormItem className="flex flex-row items-start space-x-3 space-y-0"> <FormControl><Checkbox checked={field.value?.includes(item.id)} onCheckedChange={(checked) => { return checked ? field.onChange([...(field.value || []), item.id]) : field.onChange( field.value?.filter( (value) => value !== item.id ) ); }} /></FormControl> <FormLabel className="font-normal">{item.label}</FormLabel> </FormItem> )} /> ))} </div> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="hook1" render={({ field }) => ( <FormItem> <FormLabel>Hook #1</FormLabel> <FormControl><Textarea placeholder="Enter Hook #1" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="hook2" render={({ field }) => ( <FormItem> <FormLabel>Hook #2</FormLabel> <FormControl><Textarea placeholder="Enter Hook #2" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="hook3" render={({ field }) => ( <FormItem> <FormLabel>Hook #3</FormLabel> <FormControl><Textarea placeholder="Enter Hook #3" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-4">
                 <AccordionTrigger className="font-semibold">Ad Copy & CTA</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description (General)</FormLabel> <FormControl> <Textarea placeholder="General description for the ad" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="bodyCopy1Winner" render={({ field }) => ( <FormItem> <FormLabel>Body Copy 1 (Previous Winner)</FormLabel> <FormControl> <Textarea placeholder="Enter previous winning body copy" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="bodyCopy2New" render={({ field }) => ( <FormItem> <FormLabel>Body Copy 2 (New)</FormLabel> <FormControl> <Textarea placeholder="Enter new body copy" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="headline1Winner" render={({ field }) => ( <FormItem> <FormLabel>Headline 1 (Previous Winner)</FormLabel> <FormControl> <Input placeholder="Enter previous winning headline" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="headline2New" render={({ field }) => ( <FormItem> <FormLabel>Headline 2 (New)</FormLabel> <FormControl> <Input placeholder="Enter new headline" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description (General)</FormLabel> <FormControl><Textarea placeholder="General description for the ad" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="bodyCopy1Winner" render={({ field }) => ( <FormItem> <FormLabel>Body Copy 1 (Previous Winner)</FormLabel> <FormControl><Textarea placeholder="Enter previous winning body copy" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="bodyCopy2New" render={({ field }) => ( <FormItem> <FormLabel>Body Copy 2 (New)</FormLabel> <FormControl><Textarea placeholder="Enter new body copy" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="headline1Winner" render={({ field }) => ( <FormItem> <FormLabel>Headline 1 (Previous Winner)</FormLabel> <FormControl><Input placeholder="Enter previous winning headline" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="headline2New" render={({ field }) => ( <FormItem> <FormLabel>Headline 2 (New)</FormLabel> <FormControl><Input placeholder="Enter new headline" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                   <FormField control={form.control} name="cta" render={({ field }) => ( <FormItem> <FormLabel>Call to Action (CTA)</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl><SelectTrigger><SelectValue placeholder="Select CTA" /></SelectTrigger></FormControl> <SelectContent> {['Shop Now', 'Learn More', 'Start Free Trial', 'Get Started', 'Sign Up'].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)} </SelectContent> </Select> <FormMessage /> </FormItem> )} />
                 </AccordionContent>
               </AccordionItem>
@@ -159,17 +160,17 @@ export default function AdCreationPage() {
               <AccordionItem value="item-5">
                 <AccordionTrigger className="font-semibold">Tracking & Links</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <FormField control={form.control} name="landingPage" render={({ field }) => ( <FormItem> <FormLabel>Landing Page URL</FormLabel> <FormControl> <Input type="url" placeholder="https://example.com/landing" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="utmParameters" render={({ field }) => ( <FormItem> <FormLabel>UTM Parameters</FormLabel> <FormControl> <Textarea placeholder="e.g., utm_source=facebook&utm_medium=cpc..." {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="landingPage" render={({ field }) => ( <FormItem> <FormLabel>Landing Page URL</FormLabel> <FormControl><Input type="url" placeholder="https://example.com/landing" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="utmParameters" render={({ field }) => ( <FormItem> <FormLabel>UTM Parameters</FormLabel> <FormControl><Textarea placeholder="e.g., utm_source=facebook&utm_medium=cpc..." {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-6">
                 <AccordionTrigger className="font-semibold">Internal Links</AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <FormField control={form.control} name="notionApprovalLink" render={({ field }) => ( <FormItem> <FormLabel>Notion Approval Link</FormLabel> <FormControl> <Input type="url" placeholder="Link to Notion page" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="linkToAdBrief" render={({ field }) => ( <FormItem> <FormLabel>Link to Ad Brief</FormLabel> <FormControl> <Input type="url" placeholder="Link to ad brief document" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="canvaLinks" render={({ field }) => ( <FormItem> <FormLabel>Canva Links</FormLabel> <FormControl> <Input type="url" placeholder="Link to Canva designs" {...field} /> </FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="notionApprovalLink" render={({ field }) => ( <FormItem> <FormLabel>Notion Approval Link</FormLabel> <FormControl><Input type="url" placeholder="Link to Notion page" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="linkToAdBrief" render={({ field }) => ( <FormItem> <FormLabel>Link to Ad Brief</FormLabel> <FormControl><Input type="url" placeholder="Link to ad brief document" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="canvaLinks" render={({ field }) => ( <FormItem> <FormLabel>Canva Links</FormLabel> <FormControl><Input type="url" placeholder="Link to Canva designs" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -186,3 +187,5 @@ export default function AdCreationPage() {
     </Card>
   );
 }
+
+    
