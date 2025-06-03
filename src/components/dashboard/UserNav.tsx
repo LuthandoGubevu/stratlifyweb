@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,19 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, User as UserIcon, LogOut, Settings, CreditCard, LifeBuoy } from 'lucide-react';
+import { Bell, User as UserIcon, Settings, CreditCard, LifeBuoy } from 'lucide-react'; // Removed LogOut
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export function UserNav() {
-  const { user, signOut } = useAuth();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/'); // Redirect to landing page
-  };
+  const { user } = useAuth(); // Removed signOut and router as they are no longer used here
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'AD';
@@ -84,12 +78,10 @@ export function UserNav() {
               <LifeBuoy className="mr-2 h-4 w-4" />
               <span>Support</span>
             </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </DropdownMenuItem>
+          {/* Logout button removed from here */}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
 }
+

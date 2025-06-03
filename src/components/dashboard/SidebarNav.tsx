@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; // Added useRouter
 import {
   LayoutDashboard,
   Lightbulb,
@@ -12,13 +12,14 @@ import {
   Tags,
   Map,
   PenSquare,
-  MousePointerClick, // Changed from MousePointerSquare
+  MousePointerClick,
   Repeat,
   Sparkles,
   Send,
   BarChart,
   Settings,
-  Loader2
+  Loader2,
+  LogOut // Added LogOut icon
 } from 'lucide-react';
 import {
   Sidebar,
@@ -31,8 +32,9 @@ import {
   SidebarSeparator,
   SidebarGroup,
   SidebarGroupLabel,
-} from '@/components/ui/sidebar'; // Ensure this path is correct for your sidebar component
+} from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button'; // Added Button for logout
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -53,7 +55,7 @@ const navItems = [
       { href: '/dashboard/master-fields', label: 'Master Fields', icon: Tags },
       { href: '/dashboard/creative-roadmap', label: 'Creative Roadmap', icon: Map },
       { href: '/dashboard/headline-patterns', label: 'Headline Patterns', icon: PenSquare },
-      { href: '/dashboard/ad-creation', label: 'Ad Creation', icon: MousePointerClick }, // Changed from MousePointerSquare
+      { href: '/dashboard/ad-creation', label: 'Ad Creation', icon: MousePointerClick },
       { href: '/dashboard/iteration-tracker', label: 'Iteration Tracker', icon: Repeat },
       { href: '/dashboard/mechanization', label: 'Mechanization', icon: Sparkles },
       { href: '/dashboard/submissions', label: 'Submissions', icon: Send },
@@ -71,7 +73,13 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const { loading: authLoading } = useAuth();
+  const { loading: authLoading, signOut, user } = useAuth(); // Added signOut and user
+  const router = useRouter(); // Added useRouter
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/'); // Redirect to landing page
+  };
 
   const renderNavItem = (item: any, index: number) => (
     <SidebarMenuItem key={item.href || `item-${index}`}>
@@ -108,14 +116,23 @@ export function SidebarNav() {
           })}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-2">
         {authLoading && (
           <div className="flex items-center justify-center p-2 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Loading...
           </div>
         )}
+        {user && !authLoading && (
+           <SidebarMenuItem>
+             <SidebarMenuButton onClick={handleSignOut} tooltip="Log Out" className="w-full">
+                <LogOut className="w-5 h-5" />
+                <span>Log Out</span>
+              </SidebarMenuButton>
+           </SidebarMenuItem>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
 }
+
