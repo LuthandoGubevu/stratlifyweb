@@ -20,7 +20,7 @@ export default function DashboardLayout({
               <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
                 <Link href="/dashboard" className="flex items-center gap-2 text-xl font-headline font-semibold text-primary md:hidden">
                   <Rocket className="h-6 w-6 text-accent" />
-                  AdCreativeAI
+                  Stratlify
                 </Link>
                 <div className="flex-1 md:flex-none">
                   {/* Search or other header items can go here */}

@@ -32,7 +32,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="inline-flex justify-center items-center gap-2 mb-4">
             <Rocket className="h-10 w-10 text-primary" />
-            <CardTitle className="text-3xl font-headline">AdCreativeAI</CardTitle>
+            <CardTitle className="text-3xl font-headline">Stratlify</CardTitle>
           </div>
           <CardDescription>Welcome back! Please login to your account.</CardDescription>
         </CardHeader>

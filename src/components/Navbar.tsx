@@ -11,7 +11,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 text-2xl font-headline font-semibold text-primary">
             <Rocket className="h-7 w-7 text-accent" />
-            AdCreativeAI
+            Stratlify
           </Link>
           <div className="space-x-4">
             <Button variant="ghost" asChild>

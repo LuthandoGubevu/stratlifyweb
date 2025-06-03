@@ -17,7 +17,7 @@ export default function DashboardPage() {
           Welcome back, {user?.displayName || 'Strategist'}!
         </h1>
         <p className="text-muted-foreground mt-1">
-          Here's your AdCreativeAI dashboard. Let's build some winning campaigns.
+          Here's your Stratlify dashboard. Let's build some winning campaigns.
         </p>
       </div>
 

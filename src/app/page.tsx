@@ -13,7 +13,7 @@ export default function LandingPage() {
         <section className="pt-32 pb-16 md:pt-40 md:pb-24 text-center bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-primary mb-6">
-              Elevate Your Ad Strategy with AdCreativeAI
+              Elevate Your Ad Strategy with Stratlify
             </h1>
             <p className="text-lg sm:text-xl text-foreground/80 max-w-3xl mx-auto mb-10">
               Track, test, and optimize your creative ad campaigns using deep copywriting frameworks, iteration tracking, and structured ad building.
@@ -33,7 +33,7 @@ export default function LandingPage() {
         <section className="py-16 md:py-24 bg-secondary/50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-headline font-semibold text-center text-primary mb-12">
-              Why AdCreativeAI?
+              Why Stratlify?
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
@@ -61,7 +61,7 @@ export default function LandingPage() {
               Ready to Revolutionize Your Ad Campaigns?
             </h2>
             <p className="text-lg opacity-80 max-w-2xl mx-auto mb-8">
-              Join AdCreativeAI today and start building high-performing ads that convert.
+              Join Stratlify today and start building high-performing ads that convert.
             </p>
             <Button size="lg" variant="secondary" asChild className="font-semibold text-primary hover:bg-secondary/90">
               <Link href="/register">Sign Up Now</Link>
@@ -72,7 +72,7 @@ export default function LandingPage() {
 
       <footer className="py-8 bg-background border-t border-border">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-foreground/60">
-          <p>&copy; {new Date().getFullYear()} AdCreativeAI. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Stratlify. All rights reserved.</p>
           <p className="text-sm">A platform for modern advertising teams.</p>
         </div>
       </footer>

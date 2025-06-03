@@ -6,8 +6,8 @@ import { UserProvider } from '@/contexts/UserContext';
 import { DataProvider } from '@/contexts/DataContext';
 
 export const metadata: Metadata = {
-  title: 'AdCreativeAI - Marketing Strategy Platform',
-  description: 'Track, test, and optimize creative ad campaigns with AdCreativeAI.',
+  title: 'Stratlify - Marketing Strategy Platform',
+  description: 'Track, test, and optimize creative ad campaigns with Stratlify.',
 };
 
 export default function RootLayout({
