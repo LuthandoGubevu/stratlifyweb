@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -33,6 +34,8 @@ interface MasterFieldEntry {
 }
 
 const LOCAL_STORAGE_MASTERFIELDS_KEY = 'masterFieldEntries';
+const ALL_STATUSES_VALUE = '__all_statuses__';
+const ALL_AVATARS_VALUE = '__all_avatars__';
 
 export default function MasterFieldsPage() {
   const [entries, setEntries] = useState<MasterFieldEntry[]>([]);
@@ -87,7 +90,6 @@ export default function MasterFieldsPage() {
     (filterAvatar ? entry.avatarName.toLowerCase().includes(filterAvatar.toLowerCase()) : true)
   );
   
-  // Get unique avatar names for filter dropdown
   const uniqueAvatarNames = Array.from(new Set(entries.map(e => e.avatarName)));
 
   return (
@@ -140,17 +142,23 @@ export default function MasterFieldsPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center">
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select 
+              value={filterStatus || ALL_STATUSES_VALUE} 
+              onValueChange={(val) => setFilterStatus(val === ALL_STATUSES_VALUE ? '' : val)}
+            >
               <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value={ALL_STATUSES_VALUE}>All Statuses</SelectItem>
                 {['Pending', 'Approved', 'Rejected', 'Live', 'Paused'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
-             <Select value={filterAvatar} onValueChange={setFilterAvatar}>
+             <Select 
+              value={filterAvatar || ALL_AVATARS_VALUE} 
+              onValueChange={(val) => setFilterAvatar(val === ALL_AVATARS_VALUE ? '' : val)}
+             >
               <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Filter by Avatar" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Avatars</SelectItem>
+                <SelectItem value={ALL_AVATARS_VALUE}>All Avatars</SelectItem>
                 {uniqueAvatarNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
               </SelectContent>
             </Select>
