@@ -16,7 +16,7 @@ import {
   Repeat,
   Sparkles,
   Send,
-  BarChart,
+  // BarChart, // Removed Analytics icon
   Settings,
   Loader2,
   LogOut 
@@ -62,10 +62,10 @@ const navItems = [
     ],
   },
   {
-    label: 'Analysis & Settings',
+    label: 'Settings', // Simplified group label as Analytics is removed
     isGroup: true,
     items: [
-      { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart },
+      // { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart }, // Removed Analytics link
       { href: '/dashboard/profile', label: 'Profile & Settings', icon: Settings },
     ],
   }
