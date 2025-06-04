@@ -23,7 +23,14 @@ import type { MassDesire } from '../mass-desires/page';
 import type { FeatureBenefitPair } from '../features-to-benefits/page';
 import type { RoadmapEntry } from '../creative-roadmap/page';
 import type { HeadlinePattern } from '../headline-patterns/page';
-import type { Mechanism } from '../mechanization/page'; // Assuming this type exists or is similar
+import type { Mechanism } from '../mechanization/page';
+import type { AdCreationFormValues } from '../ad-creation/page.tsx'; // Import AdCreationFormValues
+
+interface StoredAdCreationEntry { // Helper interface for what's stored in localStorage for ads
+  id: string;
+  data: AdCreationFormValues;
+  createdAt: string;
+}
 
 const LOCAL_STORAGE_AVATARS_KEY = 'customerAvatarsEntries';
 const LOCAL_STORAGE_IDEAS_KEY = 'ideaTrackerEntries';
@@ -32,6 +39,7 @@ const LOCAL_STORAGE_FB_KEY = 'featuresBenefitsEntries';
 const LOCAL_STORAGE_ROADMAP_KEY = 'creativeRoadmapEntries';
 const LOCAL_STORAGE_HEADLINES_KEY = 'headlinePatterns';
 const LOCAL_STORAGE_MECHANISMS_KEY = 'productMechanisms';
+const LOCAL_STORAGE_AD_CREATION_KEY = 'adCreationEntries'; // Key for Ad Creation data
 const LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY = 'compiledCampaignSubmissions';
 
 interface CompiledCampaignSubmission {
@@ -46,7 +54,7 @@ interface CompiledCampaignSubmission {
   creativeRoadmap?: RoadmapEntry;
   headlinePattern?: HeadlinePattern;
   mechanization?: Mechanism;
-  // Add other module data types here as needed
+  adCreation?: AdCreationFormValues; // Add Ad Creation data
 }
 
 export default function SubmissionsPage() {
@@ -59,6 +67,7 @@ export default function SubmissionsPage() {
   const [selectedRoadmapEntry, setSelectedRoadmapEntry] = useState('');
   const [selectedHeadlinePattern, setSelectedHeadlinePattern] = useState('');
   const [selectedMechanism, setSelectedMechanism] = useState('');
+  const [selectedAdCreation, setSelectedAdCreation] = useState(''); // State for selected ad
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -70,6 +79,7 @@ export default function SubmissionsPage() {
   const [roadmapEntries, setRoadmapEntries] = useState<RoadmapEntry[]>([]);
   const [headlinePatterns, setHeadlinePatterns] = useState<HeadlinePattern[]>([]);
   const [mechanisms, setMechanisms] = useState<Mechanism[]>([]);
+  const [adCreationEntries, setAdCreationEntries] = useState<StoredAdCreationEntry[]>([]); // State for Ad Creation entries
   
   const [compiledSubmissions, setCompiledSubmissions] = useState<CompiledCampaignSubmission[]>([]);
   const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<CompiledCampaignSubmission | null>(null);
@@ -93,12 +103,15 @@ export default function SubmissionsPage() {
     loadData<RoadmapEntry>(LOCAL_STORAGE_ROADMAP_KEY, setRoadmapEntries, "Roadmap Entries");
     loadData<HeadlinePattern>(LOCAL_STORAGE_HEADLINES_KEY, setHeadlinePatterns, "Headline Patterns");
     loadData<Mechanism>(LOCAL_STORAGE_MECHANISMS_KEY, setMechanisms, "Mechanisms");
+    loadData<StoredAdCreationEntry>(LOCAL_STORAGE_AD_CREATION_KEY, setAdCreationEntries, "Ad Creation Entries"); // Load Ad Creation
     loadData<CompiledCampaignSubmission>(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, setCompiledSubmissions, "Compiled Submissions");
 
   }, [toast]);
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(compiledSubmissions));
+    if (compiledSubmissions.length > 0 || localStorage.getItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY)) {
+        localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(compiledSubmissions));
+    }
   }, [compiledSubmissions]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,6 +125,11 @@ export default function SubmissionsPage() {
     }
 
     const findItemById = <T extends {id: string}>(items: T[], id: string): T | undefined => items.find(item => item.id === id);
+    const findAdCreationById = (items: StoredAdCreationEntry[], id: string): AdCreationFormValues | undefined => {
+        const found = items.find(item => item.id === id);
+        return found?.data;
+    };
+
 
     const campaignData: CompiledCampaignSubmission = {
       id: String(Date.now()),
@@ -125,6 +143,7 @@ export default function SubmissionsPage() {
       creativeRoadmap: findItemById(roadmapEntries, selectedRoadmapEntry),
       headlinePattern: findItemById(headlinePatterns, selectedHeadlinePattern),
       mechanization: findItemById(mechanisms, selectedMechanism),
+      adCreation: findAdCreationById(adCreationEntries, selectedAdCreation), // Include Ad Creation data
     };
     
     setCompiledSubmissions(prev => [campaignData, ...prev]);
@@ -144,6 +163,7 @@ export default function SubmissionsPage() {
     setSelectedRoadmapEntry('');
     setSelectedHeadlinePattern('');
     setSelectedMechanism('');
+    setSelectedAdCreation(''); // Reset selected ad
     setIsSubmitting(false);
   };
 
@@ -167,7 +187,7 @@ export default function SubmissionsPage() {
               </div>
             </div>
             
-            <Accordion type="multiple" className="w-full" defaultValue={['item-1']}>
+            <Accordion type="multiple" className="w-full" defaultValue={['item-1', 'item-2']}>
               <AccordionItem value="item-1">
                 <AccordionTrigger className="font-semibold">Core Campaign Elements</AccordionTrigger>
                 <AccordionContent className="pt-4 space-y-4">
@@ -204,7 +224,7 @@ export default function SubmissionsPage() {
                       <Select value={selectedFeatureBenefit} onValueChange={setSelectedFeatureBenefit}>
                         <SelectTrigger id="feature-benefit"><SelectValue placeholder="Select Feature & Benefit" /></SelectTrigger>
                         <SelectContent>
-                          {featuresBenefits.length > 0 ? featuresBenefits.map(item => <SelectItem key={item.id} value={item.id}>{`${item.productFeature} -> ${item.directBenefit}`}</SelectItem>) : <SelectItem value="no-fb" disabled>No feature-benefit pairs.</SelectItem>}
+                          {featuresBenefits.length > 0 ? featuresBenefits.map(item => <SelectItem key={item.id} value={item.id}>{`${item.productFeature.substring(0,20)}... -> ${item.directBenefit.substring(0,20)}...`}</SelectItem>) : <SelectItem value="no-fb" disabled>No feature-benefit pairs.</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -239,6 +259,15 @@ export default function SubmissionsPage() {
                         <SelectTrigger id="mechanization"><SelectValue placeholder="Select Mechanism" /></SelectTrigger>
                         <SelectContent>
                           {mechanisms.length > 0 ? mechanisms.map(item => <SelectItem key={item.id} value={item.id}>{item.mechanismName} ({item.product})</SelectItem>) : <SelectItem value="no-mechanisms" disabled>No mechanisms defined.</SelectItem>}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ad-creation-entry">Ad Creation Draft</Label>
+                      <Select value={selectedAdCreation} onValueChange={setSelectedAdCreation}>
+                        <SelectTrigger id="ad-creation-entry"><SelectValue placeholder="Select Ad Draft" /></SelectTrigger>
+                        <SelectContent>
+                          {adCreationEntries.length > 0 ? adCreationEntries.map(item => <SelectItem key={item.id} value={item.id}>{item.data.adConcept || item.data.batchDctNumber} (Saved: {new Date(item.createdAt).toLocaleDateString()})</SelectItem>) : <SelectItem value="no-ad-drafts" disabled>No ad drafts saved.</SelectItem>}
                         </SelectContent>
                       </Select>
                     </div>
@@ -294,5 +323,3 @@ export default function SubmissionsPage() {
     </div>
   );
 }
-
-    

@@ -53,7 +53,15 @@ const adCreationSchema = z.object({
   headline2New: z.string().min(1, 'New Headline is required'),
 });
 
-type AdCreationFormValues = z.infer<typeof adCreationSchema>;
+export type AdCreationFormValues = z.infer<typeof adCreationSchema>;
+
+interface StoredAdCreationEntry {
+  id: string;
+  data: AdCreationFormValues;
+  createdAt: string;
+}
+
+const LOCAL_STORAGE_AD_CREATION_KEY = 'adCreationEntries';
 
 const hookPatternOptions = [
   { id: 'curiosity', label: 'Curiosity' },
@@ -85,33 +93,58 @@ export default function AdCreationPage() {
 
   const onSubmit = async (data: AdCreationFormValues) => {
     setIsSubmitting(true);
-    console.log(data);
+    console.log("Submitting ad:", data);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     toast({
       title: "Ad Submitted",
-      description: "Your new ad has been successfully submitted.",
+      description: "Your new ad has been successfully submitted. (This is a placeholder action)",
     });
-    form.reset();
+    // form.reset(); // Decide if form should reset on actual submission
     setIsSubmitting(false);
   };
 
   const onSaveDraft = async () => {
     const data = form.getValues();
-    console.log("Saving draft:", data);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: "Draft Saved",
-      description: "Your ad draft has been saved.",
-    });
+    if (!data.adConcept && !data.batchDctNumber) {
+        toast({
+            title: "Cannot Save Draft",
+            description: "Please enter at least an Ad Concept or Batch/DCT # to save a draft.",
+            variant: "destructive",
+        });
+        return;
+    }
+    
+    const newDraft: StoredAdCreationEntry = {
+      id: String(Date.now()),
+      data: data,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      const existingDraftsRaw = localStorage.getItem(LOCAL_STORAGE_AD_CREATION_KEY);
+      const existingDrafts: StoredAdCreationEntry[] = existingDraftsRaw ? JSON.parse(existingDraftsRaw) : [];
+      existingDrafts.unshift(newDraft); // Add to the beginning
+      localStorage.setItem(LOCAL_STORAGE_AD_CREATION_KEY, JSON.stringify(existingDrafts));
+      toast({
+        title: "Draft Saved",
+        description: `Ad draft "${data.adConcept || data.batchDctNumber}" has been saved locally.`,
+      });
+    } catch (error) {
+      console.error("Error saving draft to localStorage:", error);
+      toast({
+        title: "Error Saving Draft",
+        description: "Could not save draft to local storage.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-2xl">Create New Ad</CardTitle>
-        <CardDescription>Fill in the details below to structure your new ad campaign.</CardDescription>
+        <CardDescription>Fill in the details below to structure your new ad campaign. Saved drafts can be used in Submissions.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -187,5 +220,3 @@ export default function AdCreationPage() {
     </Card>
   );
 }
-
-    
