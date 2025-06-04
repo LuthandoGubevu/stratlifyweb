@@ -214,7 +214,7 @@ export default function AdCreationPage() {
   return (
     <div className="space-y-6">
       {!showForm ? (
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
@@ -262,5 +262,3 @@ export default function AdCreationPage() {
     </div>
   );
 }
-
-    

@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select';
 import type { AdCreationFormValues, hookPatternOptions as HookPatternOptionsType } from '@/app/dashboard/ad-creation/page';
 import { ArrowLeft } from 'lucide-react';
+import React from 'react';
 
 interface AdFormProps {
   initialData: AdCreationFormValues;
@@ -64,7 +65,7 @@ export default function AdForm({
   const ctaOptions = ['Shop Now', 'Learn More', 'Start Free Trial', 'Get Started', 'Sign Up'];
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -152,5 +153,3 @@ export default function AdForm({
     </Card>
   );
 }
-
-    
