@@ -6,16 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Users, Heart, Lightbulb, Package, ArrowRight, Clock, Edit3 } from 'lucide-react';
+import { Users, Heart, Lightbulb, Package, ArrowRight, Clock, Edit3, Gift, Tags, Map, PenSquare, Repeat, Sparkles, Send } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
-import type { CustomerAvatar, LOCAL_STORAGE_AVATARS_KEY as LSAK_Avatars } from './customer-avatars/page';
-import type { MassDesire, LOCAL_STORAGE_DESIRES_KEY as LSAK_Desires } from './mass-desires/page';
-import type { Idea, LOCAL_STORAGE_IDEAS_KEY as LSAK_Ideas } from './idea-tracker/page';
-import type { StoredAdCreationEntry, LOCAL_STORAGE_AD_CREATION_KEY as LSAK_Ads } from './ad-creation/page';
-import type { HeadlinePattern, LOCAL_STORAGE_HEADLINES_KEY as LSAK_Headlines } from './headline-patterns/page';
-import type { CompiledCampaignSubmission, LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY as LSAK_Submissions } from './submissions/page';
+import type { CustomerAvatar } from './customer-avatars/page';
+import type { MassDesire } from './mass-desires/page';
+import type { Idea } from './idea-tracker/page';
+import type { StoredAdCreationEntry, AdCreationFormValues } from './ad-creation/page';
+import type { HeadlinePattern } from './headline-patterns/page';
+import type { CompiledCampaignSubmission } from './submissions/page';
+import type { FeatureBenefitPair } from './features-to-benefits/page';
+import type { MasterFieldEntry } from './master-fields/page';
+import type { RoadmapEntry } from './creative-roadmap/page';
+import type { IterationEntry } from './iteration-tracker/page';
+import type { Mechanism } from './mechanization/page';
+
 
 // Re-declare localStorage keys as constants here if not directly importable or for clarity
 const AVATARS_KEY = 'customerAvatarsEntries';
@@ -24,6 +30,11 @@ const IDEAS_KEY = 'ideaTrackerEntries';
 const ADS_KEY = 'adCreationEntries';
 const HEADLINES_KEY = 'headlinePatterns';
 const SUBMISSIONS_KEY = 'compiledCampaignSubmissions';
+const FEATURES_BENEFITS_KEY = 'featuresBenefitsEntries';
+const MASTER_FIELDS_KEY = 'masterFieldEntries';
+const ROADMAP_KEY = 'creativeRoadmapEntries';
+const ITERATIONS_KEY = 'iterationTrackerEntries';
+const MECHANISMS_KEY = 'productMechanisms';
 
 
 interface MetricCardProps {
@@ -107,52 +118,74 @@ export default function DashboardPage() {
   const [desireCount, setDesireCount] = useState(0);
   const [adConceptCount, setAdConceptCount] = useState(0);
   const [marketingAssetCount, setMarketingAssetCount] = useState(0);
+  const [featureBenefitCount, setFeatureBenefitCount] = useState(0);
+  const [masterFieldCount, setMasterFieldCount] = useState(0);
+  const [roadmapEntryCount, setRoadmapEntryCount] = useState(0);
+  const [headlinePatternCount, setHeadlinePatternCount] = useState(0);
+  const [iterationTrackerCount, setIterationTrackerCount] = useState(0);
+  const [mechanismCount, setMechanismCount] = useState(0);
+  const [submissionCount, setSubmissionCount] = useState(0);
+  
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationItemProps[]>([]);
 
   useEffect(() => {
     const loadData = () => {
-      // Load Avatars
-      const storedAvatars = localStorage.getItem(AVATARS_KEY);
-      const avatars: CustomerAvatar[] = storedAvatars ? JSON.parse(storedAvatars) : [];
+      const safelyParseLocalStorage = <T,>(key: string, defaultValue: T[] = []): T[] => {
+        try {
+          const storedData = localStorage.getItem(key);
+          return storedData ? JSON.parse(storedData) : defaultValue;
+        } catch (e) {
+          console.error(`Failed to parse ${key} from localStorage`, e);
+          return defaultValue;
+        }
+      };
+
+      const avatars: CustomerAvatar[] = safelyParseLocalStorage<CustomerAvatar>(AVATARS_KEY);
       setAvatarCount(avatars.length);
 
-      // Load Mass Desires
-      const storedDesires = localStorage.getItem(DESIRES_KEY);
-      const desires: MassDesire[] = storedDesires ? JSON.parse(storedDesires) : [];
+      const desires: MassDesire[] = safelyParseLocalStorage<MassDesire>(DESIRES_KEY);
       setDesireCount(desires.length);
 
-      // Load Ad Concepts (Ideas)
-      const storedIdeas = localStorage.getItem(IDEAS_KEY);
-      const ideas: Idea[] = storedIdeas ? JSON.parse(storedIdeas) : [];
+      const ideas: Idea[] = safelyParseLocalStorage<Idea>(IDEAS_KEY);
       setAdConceptCount(ideas.length);
 
-      // Load Marketing Assets (Ad Creations)
-      const storedAds = localStorage.getItem(ADS_KEY);
-      const ads: StoredAdCreationEntry[] = storedAds ? JSON.parse(storedAds) : [];
+      const ads: StoredAdCreationEntry[] = safelyParseLocalStorage<StoredAdCreationEntry>(ADS_KEY);
       setMarketingAssetCount(ads.length);
+
+      const featureBenefits: FeatureBenefitPair[] = safelyParseLocalStorage<FeatureBenefitPair>(FEATURES_BENEFITS_KEY);
+      setFeatureBenefitCount(featureBenefits.length);
       
-      // Load Headline Patterns for recommendations
-      const storedHeadlines = localStorage.getItem(HEADLINES_KEY);
-      const headlinePatterns: HeadlinePattern[] = storedHeadlines ? JSON.parse(storedHeadlines) : [];
+      const masterFields: MasterFieldEntry[] = safelyParseLocalStorage<MasterFieldEntry>(MASTER_FIELDS_KEY);
+      setMasterFieldCount(masterFields.length);
+
+      const roadmapEntries: RoadmapEntry[] = safelyParseLocalStorage<RoadmapEntry>(ROADMAP_KEY);
+      setRoadmapEntryCount(roadmapEntries.length);
+
+      const headlinePatterns: HeadlinePattern[] = safelyParseLocalStorage<HeadlinePattern>(HEADLINES_KEY);
+      setHeadlinePatternCount(headlinePatterns.length);
+
+      const iterations: IterationEntry[] = safelyParseLocalStorage<IterationEntry>(ITERATIONS_KEY);
+      setIterationTrackerCount(iterations.length);
+
+      const mechanisms: Mechanism[] = safelyParseLocalStorage<Mechanism>(MECHANISMS_KEY);
+      setMechanismCount(mechanisms.length);
+      
+      const submissions: CompiledCampaignSubmission[] = safelyParseLocalStorage<CompiledCampaignSubmission>(SUBMISSIONS_KEY);
+      setSubmissionCount(submissions.length);
 
       // Generate Recent Activities
       let activities: ActivityItem[] = [];
       avatars.slice(0, 5).forEach(a => activities.push({ id: `avatar-${a.id}`, action: `New customer avatar "${a.name}" created.`, time: formatDistanceToNow(parseISO(a.createdAt), { addSuffix: true }), timestamp: parseISO(a.createdAt), link: '/dashboard/customer-avatars'  }));
       ideas.slice(0, 5).forEach(i => activities.push({ id: `idea-${i.id}`, action: `Ad concept "${i.concept}" (Status: ${i.status}).`, time: formatDistanceToNow(parseISO(i.createdAt), { addSuffix: true }), timestamp: parseISO(i.createdAt), link: '/dashboard/idea-tracker'  }));
       ads.slice(0,3).forEach(ad => activities.push({ id: `ad-${ad.id}`, action: `Ad draft "${ad.data.adConcept || ad.data.batchDctNumber || 'Untitled Ad'}" saved.`, time: formatDistanceToNow(parseISO(ad.createdAt), { addSuffix: true }), timestamp: parseISO(ad.createdAt), link: '/dashboard/ad-creation' }));
-      
-      const storedSubmissions = localStorage.getItem(SUBMISSIONS_KEY);
-      const submissions: CompiledCampaignSubmission[] = storedSubmissions ? JSON.parse(storedSubmissions) : [];
       submissions.slice(0,3).forEach(s => {
-        const subTimestamp = typeof s.submittedAt === 'string' ? parseISO(s.submittedAt) : (s.submittedAt as any).toDate(); // Handle Firestore Timestamp or ISO string
+        const subTimestamp = typeof s.submittedAt === 'string' ? parseISO(s.submittedAt) : new Date(); // Simplified for local
         activities.push({ id: `sub-${s.id}`, action: `Campaign "${s.submissionTitle}" submitted.`, time: formatDistanceToNow(subTimestamp, { addSuffix: true }), timestamp: subTimestamp, link: s.firestoreId ? `/submission/${s.firestoreId}` : '/dashboard/submissions' });
       });
 
-
       activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       setRecentActivities(activities.slice(0, 5));
-
 
       // Generate Recommendations
       const newRecommendations: RecommendationItemProps[] = [];
@@ -161,10 +194,10 @@ export default function DashboardPage() {
       }
       const rawIdeas = ideas.filter(idea => idea.status === 'Raw').length;
       if (rawIdeas > 1 && ideas.length > 0) {
-        newRecommendations.push({ title: 'Develop Raw Ideas', description: `You have ${rawIdeas} 'Raw' ad concepts. Try developing them further into actionable plans.`, actionText: 'View Ideas', actionLink: '/dashboard/idea-tracker', bgColorClass: 'bg-purple-500', icon: <Lightbulb className="h-4 w-4 text-purple-700" /> });
+        newRecommendations.push({ title: 'Develop Raw Ideas', description: `You have ${rawIdeas} 'Raw' ad concepts. Try developing them further.`, actionText: 'View Ideas', actionLink: '/dashboard/idea-tracker', bgColorClass: 'bg-purple-500', icon: <Lightbulb className="h-4 w-4 text-purple-700" /> });
       }
       if (headlinePatterns.length < 3) {
-        newRecommendations.push({ title: 'Expand Headline Arsenal', description: 'Boost your ad copy by adding more versatile headline patterns to your collection.', actionText: 'Add Patterns', actionLink: '/dashboard/headline-patterns', bgColorClass: 'bg-green-500', icon: <Edit3 className="h-4 w-4 text-green-700" /> });
+        newRecommendations.push({ title: 'Expand Headline Arsenal', description: 'Boost your ad copy by adding more headline patterns.', actionText: 'Add Patterns', actionLink: '/dashboard/headline-patterns', bgColorClass: 'bg-green-500', icon: <Edit3 className="h-4 w-4 text-green-700" /> });
       }
        if (newRecommendations.length < 3 && marketingAssetCount < 1) {
         newRecommendations.push({ title: 'Create Your First Ad', description: 'Start building your first marketing asset using the ad creation tool.', actionText: 'Create Ad', actionLink: '/dashboard/ad-creation', bgColorClass: 'bg-yellow-500', icon: <Package className="h-4 w-4 text-yellow-700" /> });
@@ -173,7 +206,6 @@ export default function DashboardPage() {
     };
 
     loadData();
-     // Set up an interval to refresh data every 30 seconds, for example
     const intervalId = setInterval(loadData, 30000);
     return () => clearInterval(intervalId);
 
@@ -185,6 +217,13 @@ export default function DashboardPage() {
     { title: 'Mass Desires', value: String(desireCount), icon: <Heart className="h-5 w-5" />, viewLink: '/dashboard/mass-desires' },
     { title: 'Ad Concepts', value: String(adConceptCount), icon: <Lightbulb className="h-5 w-5" />, viewLink: '/dashboard/idea-tracker' },
     { title: 'Marketing Assets', value: String(marketingAssetCount), icon: <Package className="h-5 w-5" />, viewLink: '/dashboard/ad-creation' },
+    { title: 'Benefit Conversions', value: String(featureBenefitCount), icon: <Gift className="h-5 w-5" />, viewLink: '/dashboard/features-to-benefits' },
+    { title: 'Master Field Entries', value: String(masterFieldCount), icon: <Tags className="h-5 w-5" />, viewLink: '/dashboard/master-fields' },
+    { title: 'Roadmap Items', value: String(roadmapEntryCount), icon: <Map className="h-5 w-5" />, viewLink: '/dashboard/creative-roadmap' },
+    { title: 'Headline Patterns', value: String(headlinePatternCount), icon: <PenSquare className="h-5 w-5" />, viewLink: '/dashboard/headline-patterns' },
+    { title: 'Tracked Iterations', value: String(iterationTrackerCount), icon: <Repeat className="h-5 w-5" />, viewLink: '/dashboard/iteration-tracker' },
+    { title: 'Product Mechanisms', value: String(mechanismCount), icon: <Sparkles className="h-5 w-5" />, viewLink: '/dashboard/mechanization' },
+    { title: 'Campaign Submissions', value: String(submissionCount), icon: <Send className="h-5 w-5" />, viewLink: '/dashboard/submissions' },
   ];
 
   return (
@@ -200,7 +239,7 @@ export default function DashboardPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {metricCardsData.map((card) => (
           <MetricCard key={card.title} {...card} />
         ))}
@@ -242,10 +281,9 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground">No recent activity to display.</p>
               )}
             </CardContent>
-            {recentActivities.length > 0 && ( // Only show if there's activity
+            {recentActivities.length > 0 && (
                 <CardFooter>
                 <Button variant="outline" size="sm" asChild className="w-full">
-                    {/* This link is a placeholder, real "view all" would need a dedicated page or modal */}
                     <Link href="#">View all activity</Link>
                 </Button>
                 </CardFooter>
@@ -269,4 +307,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
