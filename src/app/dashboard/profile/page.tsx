@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { updateProfile, updateEmail, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { Switch } from "@/components/ui/switch";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase'; // Import Firebase storage instance
+import { Edit3 } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, loading: authLoading, setError: setAuthError, error: authError } = useAuth();
@@ -18,23 +21,27 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-  const [photoURL, setPhotoURL] = useState('');
+  // No longer need photoURL state for input, will use imagePreviewUrl and user.photoURL
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   
-  // Placeholder for settings
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
 
   useEffect(() => {
     if (user) {
       setDisplayName(user.displayName || '');
       setEmail(user.email || '');
-      setPhotoURL(user.photoURL || '');
+      setImagePreviewUrl(user.photoURL || null); // Initialize preview with current user photo
     }
   }, [user]);
 
@@ -47,23 +54,74 @@ export default function ProfilePage() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ title: "File Too Large", description: "Please select an image smaller than 5MB.", variant: "destructive" });
+        return;
+      }
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedFile(null);
+      // Don't reset imagePreviewUrl here, user might cancel selection
+      // It will revert to user.photoURL if no file is ultimately uploaded
+    }
+  };
+
+  const handleAvatarAreaClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
     setIsSubmittingProfile(true);
+    setIsUploadingImage(false);
     setAuthError(null);
 
+    let newPhotoURLForUpdate = user.photoURL; 
+
     try {
-      await updateProfile(user, { displayName, photoURL });
-      // If email change is implemented, it requires re-authentication.
-      // For now, we'll just update displayName and photoURL.
-      // if (email !== user.email) {
-      //   await updateEmail(user, email); // This requires re-authentication
-      // }
-      toast({ title: "Profile Updated", description: "Your profile details have been saved." });
+      if (selectedFile) {
+        setIsUploadingImage(true);
+        const filePath = `profileImages/${user.uid}/${Date.now()}_${selectedFile.name}`;
+        const fileStorageRef = storageRef(storage, filePath);
+        
+        toast({ title: "Uploading Image...", description: "Please wait."});
+        await uploadBytes(fileStorageRef, selectedFile);
+        newPhotoURLForUpdate = await getDownloadURL(fileStorageRef);
+        
+        setImagePreviewUrl(newPhotoURLForUpdate); // Update preview to the new URL from storage
+        setSelectedFile(null); // Reset selected file state
+        setIsUploadingImage(false);
+      }
+
+      // Check if display name or photo URL actually changed
+      const nameChanged = displayName !== (user.displayName || '');
+      const photoChanged = newPhotoURLForUpdate !== (user.photoURL || null);
+
+      if (nameChanged || photoChanged) {
+        await updateProfile(user, {
+          displayName,
+          photoURL: newPhotoURLForUpdate, 
+        });
+        toast({ title: "Profile Updated", description: "Your profile details have been saved." });
+      } else {
+        toast({ title: "No Changes", description: "No new information to save." });
+      }
+
     } catch (error: any) {
+      console.error("Profile update error:", error);
       setAuthError(error.message);
       toast({ title: "Update Failed", description: error.message, variant: "destructive" });
+      setIsUploadingImage(false);
     } finally {
       setIsSubmittingProfile(false);
     }
@@ -71,7 +129,7 @@ export default function ProfilePage() {
   
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !user.email) return; // user.email is needed for re-authentication
+    if (!user || !user.email) return; 
     if (newPassword !== confirmNewPassword) {
       setAuthError("New passwords do not match.");
       toast({ title: "Password Mismatch", description: "New passwords do not match.", variant: "destructive" });
@@ -103,8 +161,16 @@ export default function ProfilePage() {
   };
 
 
-  if (authLoading) return <p>Loading profile...</p>;
-  if (!user) return <p>Please log in to view your profile.</p>;
+  if (authLoading) return (
+    <div className="flex justify-center items-center h-screen">
+        <p>Loading profile...</p>
+    </div>
+  );
+  if (!user) return (
+    <div className="flex justify-center items-center h-screen">
+        <p>Please log in to view your profile.</p>
+    </div>
+  );
 
   return (
     <div className="space-y-8">
@@ -115,15 +181,21 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileUpdate} className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={photoURL || `https://placehold.co/100x100.png?text=${getInitials(displayName)}`} alt={displayName} data-ai-hint="profile avatar" />
-                <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="photoURL">Profile Picture URL</Label>
-                <Input id="photoURL" value={photoURL} onChange={(e) => setPhotoURL(e.target.value)} placeholder="https://example.com/avatar.png" />
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative group cursor-pointer" onClick={handleAvatarAreaClick} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleAvatarAreaClick()}>
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={imagePreviewUrl || `https://placehold.co/100x100.png?text=${getInitials(displayName)}`} alt={displayName} data-ai-hint="profile avatar" />
+                  <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 flex items-center justify-center rounded-full transition-opacity">
+                  <Edit3 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100" />
+                </div>
               </div>
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+              <Button type="button" variant="outline" size="sm" onClick={handleAvatarAreaClick}>
+                Change Picture
+              </Button>
+              <p className="text-xs text-muted-foreground">Click image or button to change. Max 5MB.</p>
             </div>
 
             <div className="space-y-2">
@@ -139,8 +211,8 @@ export default function ProfilePage() {
             
             {authError && <p className="text-sm text-destructive">{authError}</p>}
 
-            <Button type="submit" disabled={isSubmittingProfile}>
-              {isSubmittingProfile ? 'Saving Profile...' : 'Save Profile Changes'}
+            <Button type="submit" disabled={isSubmittingProfile || isUploadingImage}>
+              {isUploadingImage ? 'Uploading Image...' : (isSubmittingProfile ? 'Saving Profile...' : 'Save Profile Changes')}
             </Button>
           </form>
         </CardContent>
@@ -190,7 +262,7 @@ export default function ProfilePage() {
             </div>
             <Switch id="dark-mode" checked={darkMode} onCheckedChange={setDarkMode} />
           </div>
-          <Button variant="outline">Save Settings</Button>
+          <Button variant="outline" onClick={() => toast({title: "Settings Saved (Placeholder)", description: "App settings would be saved here."})}>Save Settings</Button>
         </CardContent>
       </Card>
     </div>
