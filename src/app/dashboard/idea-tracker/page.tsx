@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -15,8 +16,16 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Trash2, Search } from 'lucide-react';
+import { PlusCircle, Trash2, Edit, Search, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 
 interface Idea {
   id: string;
@@ -31,17 +40,26 @@ const LOCAL_STORAGE_IDEAS_KEY = 'ideaTrackerEntries';
 
 export default function IdeaTrackerPage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [newConcept, setNewConcept] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newStatus, setNewStatus] = useState<Idea['status']>('Raw');
-  const [newTags, setNewTags] = useState(''); // Comma-separated
+  const [showForm, setShowForm] = useState(false);
+  const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
+  
+  const [currentConcept, setCurrentConcept] = useState('');
+  const [currentDescription, setCurrentDescription] = useState('');
+  const [currentStatus, setCurrentStatus] = useState<Idea['status']>('Raw');
+  const [currentTags, setCurrentTags] = useState('');
+  
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     const storedIdeas = localStorage.getItem(LOCAL_STORAGE_IDEAS_KEY);
     if (storedIdeas) {
-      setIdeas(JSON.parse(storedIdeas));
+      try {
+        setIdeas(JSON.parse(storedIdeas));
+      } catch (e) {
+        console.error("Failed to parse ideas from localStorage", e);
+        setIdeas([]);
+      }
     }
   }, []);
 
@@ -49,132 +67,215 @@ export default function IdeaTrackerPage() {
     localStorage.setItem(LOCAL_STORAGE_IDEAS_KEY, JSON.stringify(ideas));
   }, [ideas]);
 
-  const handleAddIdea = (e: FormEvent) => {
+  const resetForm = () => {
+    setCurrentConcept('');
+    setCurrentDescription('');
+    setCurrentStatus('Raw');
+    setCurrentTags('');
+  };
+
+  const handleCreateNewClick = () => {
+    setEditingIdea(null);
+    resetForm();
+    setShowForm(true);
+  };
+
+  const handleEditClick = (idea: Idea) => {
+    setEditingIdea(idea);
+    setCurrentConcept(idea.concept);
+    setCurrentDescription(idea.description);
+    setCurrentStatus(idea.status);
+    setCurrentTags(idea.tags.join(', '));
+    setShowForm(true);
+  };
+  
+  const handleBackToList = () => {
+    setShowForm(false);
+    setEditingIdea(null);
+    resetForm();
+  };
+
+  const handleFormSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!newConcept.trim()) {
+    if (!currentConcept.trim()) {
       toast({ title: "Error", description: "Idea concept is required.", variant: "destructive" });
       return;
     }
-    const tagsArray = newTags.split(',').map(tag => tag.trim()).filter(tag => tag);
-    const newIdea: Idea = {
-      id: String(Date.now()),
-      concept: newConcept,
-      description: newDescription,
-      status: newStatus,
-      tags: tagsArray,
-      createdAt: new Date().toISOString(),
-    };
-    setIdeas(prev => [newIdea, ...prev]);
-    setNewConcept('');
-    setNewDescription('');
-    setNewStatus('Raw');
-    setNewTags('');
-    toast({ title: "Idea Captured", description: "New ad concept idea saved." });
+    const tagsArray = currentTags.split(',').map(tag => tag.trim()).filter(tag => tag);
+    
+    let updatedIdeas;
+
+    if (editingIdea) {
+      const ideaToUpdate: Idea = {
+        ...editingIdea,
+        concept: currentConcept,
+        description: currentDescription,
+        status: currentStatus,
+        tags: tagsArray,
+      };
+      updatedIdeas = ideas.map(idea => idea.id === editingIdea.id ? ideaToUpdate : idea);
+      toast({ title: "Idea Updated", description: `Idea "${currentConcept}" has been updated.` });
+    } else {
+      const newIdea: Idea = {
+        id: String(Date.now()),
+        concept: currentConcept,
+        description: currentDescription,
+        status: currentStatus,
+        tags: tagsArray,
+        createdAt: new Date().toISOString(),
+      };
+      updatedIdeas = [newIdea, ...ideas];
+      toast({ title: "Idea Captured", description: `New idea "${currentConcept}" has been saved.` });
+    }
+    setIdeas(updatedIdeas);
+    setShowForm(false);
+    setEditingIdea(null);
+    resetForm();
   };
 
-  const handleDeleteIdea = (id: string) => {
-    setIdeas(prev => prev.filter(idea => idea.id !== id));
-    toast({ title: "Idea Deleted", description: "Idea removed from tracker." });
+  const handleDeleteIdea = (idToDelete: string) => {
+    const ideaToDelete = ideas.find(d => d.id === idToDelete);
+    const confirmed = window.confirm(`Are you sure you want to delete the idea "${ideaToDelete?.concept || 'this idea'}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setIdeas(prev => prev.filter(idea => idea.id !== idToDelete));
+    toast({ title: "Idea Deleted", description: `Idea "${ideaToDelete?.concept}" removed from tracker.` });
+    if (editingIdea?.id === idToDelete) {
+        setShowForm(false);
+        setEditingIdea(null);
+    }
   };
 
   const filteredIdeas = ideas.filter(idea => 
     idea.concept.toLowerCase().includes(searchTerm.toLowerCase()) ||
     idea.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     idea.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+
+  const statusOptions: Idea['status'][] = ['Raw', 'Semi-Formed', 'Developed'];
+
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline text-2xl">Capture Ad Concept Idea</CardTitle>
-          <CardDescription>Jot down raw or semi-formed ad concepts. Data saved locally.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleAddIdea}>
-          <CardContent className="space-y-4">
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="font-headline text-2xl">
+              {showForm ? (editingIdea ? 'Edit Idea' : 'Capture Ad Concept Idea') : 'Idea Tracker'}
+            </CardTitle>
+            <CardDescription>
+              {showForm ? 'Modify or enter the details for your ad concept idea.' : 'Manage your ad concepts. Data saved locally.'}
+            </CardDescription>
+          </div>
+          {!showForm ? (
+            <Button onClick={handleCreateNewClick}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Idea
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={handleBackToList}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Idea List
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {showForm ? (
+          <form onSubmit={handleFormSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="concept">Idea/Concept</Label>
-              <Input id="concept" value={newConcept} onChange={(e) => setNewConcept(e.target.value)} placeholder="e.g., AI-powered productivity for writers" />
+              <Label htmlFor="concept">Idea/Concept *</Label>
+              <Input id="concept" value={currentConcept} onChange={(e) => setCurrentConcept(e.target.value)} placeholder="e.g., AI-powered productivity for writers" required />
             </div>
             <div>
               <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea id="description" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="Briefly describe the idea" />
+              <Textarea id="description" value={currentDescription} onChange={(e) => setCurrentDescription(e.target.value)} placeholder="Briefly describe the idea" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="status">Status</Label>
-                <select id="status" value={newStatus} onChange={(e) => setNewStatus(e.target.value as Idea['status'])} className="w-full p-2 border rounded-md bg-background">
-                  <option value="Raw">Raw</option>
-                  <option value="Semi-Formed">Semi-Formed</option>
-                  <option value="Developed">Developed</option>
-                </select>
+                <Select value={currentStatus} onValueChange={(val) => setCurrentStatus(val as Idea['status'])}>
+                    <SelectTrigger id="status"><SelectValue placeholder="Select status"/></SelectTrigger>
+                    <SelectContent>
+                        {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="tags">Tags (Comma-separated)</Label>
-                <Input id="tags" value={newTags} onChange={(e) => setNewTags(e.target.value)} placeholder="e.g., B2B, SaaS, AI, Video Ad" />
+                <Input id="tags" value={currentTags} onChange={(e) => setCurrentTags(e.target.value)} placeholder="e.g., B2B, SaaS, AI, Video Ad" />
               </div>
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="flex items-center gap-1">
-              <PlusCircle className="h-4 w-4" /> Add Idea
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline text-xl">Tracked Ideas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="search"
-                placeholder="Search ideas by concept, description, or tags..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 w-full"
-              />
+            <CardFooter className="p-0 pt-4 flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={handleBackToList}>Cancel</Button>
+                <Button type="submit">{editingIdea ? 'Save Changes' : 'Add Idea'}</Button>
+            </CardFooter>
+          </form>
+        ) : (
+          <>
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  type="search"
+                  placeholder="Search ideas by concept, description, or tags..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 w-full sm:w-1/2 md:w-1/3"
+                />
+              </div>
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Concept</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Tags</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredIdeas.map((idea) => (
-                  <TableRow key={idea.id}>
-                    <TableCell className="font-medium max-w-xs break-words">{idea.concept}</TableCell>
-                    <TableCell><Badge variant={idea.status === 'Developed' ? 'default' : idea.status === 'Semi-Formed' ? 'secondary' : 'outline'}>{idea.status}</Badge></TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="flex flex-wrap gap-1">
-                        {idea.tags.map(tag => <Badge key={tag} variant="outline">{tag}</Badge>)}
-                      </div>
-                    </TableCell>
-                    <TableCell>{new Date(idea.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteIdea(idea.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive"/>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          {filteredIdeas.length === 0 && <p className="text-center text-muted-foreground mt-4">No ideas found. Start by adding a new one!</p>}
-        </CardContent>
-      </Card>
-    </div>
+            {filteredIdeas.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Concept</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Tags</TableHead>
+                      <TableHead>Created At</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredIdeas.map((idea) => (
+                      <TableRow key={idea.id}>
+                        <TableCell className="font-medium max-w-xs break-words">{idea.concept}</TableCell>
+                        <TableCell><Badge variant={idea.status === 'Developed' ? 'default' : idea.status === 'Semi-Formed' ? 'secondary' : 'outline'}>{idea.status}</Badge></TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="flex flex-wrap gap-1">
+                            {idea.tags.map(tag => <Badge key={tag} variant="outline">{tag}</Badge>)}
+                          </div>
+                        </TableCell>
+                        <TableCell>{new Date(idea.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="space-x-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEditClick(idea)}>
+                            <Edit className="h-4 w-4"/>
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteIdea(idea.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive"/>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+               <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg mb-2">
+                  {searchTerm ? 'No ideas match your search.' : 'No ideas captured yet.'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {searchTerm ? 'Try a different search term or clear filters.' : 'Click the "Add New Idea" button to start!'}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
+
+        
+        

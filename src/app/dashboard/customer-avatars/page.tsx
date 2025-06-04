@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
@@ -5,48 +6,101 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Trash2, Search } from 'lucide-react';
+import { PlusCircle, Trash2, Edit, Search, ArrowLeft, UserCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 
-interface CustomerAvatar {
+export interface CustomerAvatar { // Exported for use in Submissions page
   id: string;
-  name: string; // e.g., Tech Savvy Millenial, Busy Mom, Startup Founder
-  demographics: string; // Age, Gender, Location, Income, Education
-  psychographics: string; // Interests, Values, Lifestyle, Pain Points, Goals
-  preferredChannels: string; // Social media, Email, Blogs, etc. (comma-separated)
-  tags: string[]; // For filtering/categorization
-  imageUrl?: string; // Optional image for the avatar
+  name: string; 
+  demographics: string; 
+  psychographics: string; 
+  preferredChannels: string; 
+  tags: string[]; 
+  imageUrl?: string; 
   createdAt: string;
 }
 
 const LOCAL_STORAGE_AVATARS_KEY = 'customerAvatarsEntries';
 
+
+interface AvatarDisplayCardProps {
+  avatar: CustomerAvatar;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+const AvatarDisplayCard: React.FC<AvatarDisplayCardProps> = ({ avatar, onEdit, onDelete }) => {
+  return (
+    <Card className="flex flex-col h-full shadow-md hover:shadow-lg transition-shadow duration-200">
+      <CardHeader>
+        <div className="flex items-start space-x-4">
+          <Image 
+            src={avatar.imageUrl || `https://placehold.co/100x100.png?text=${avatar.name.charAt(0)}`} 
+            alt={avatar.name} 
+            width={64} height={64} 
+            className="rounded-lg object-cover border"
+            data-ai-hint="person profile" 
+          />
+          <div className="flex-grow">
+            <CardTitle className="font-headline text-lg mb-1 truncate" title={avatar.name}>
+              {avatar.name}
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Created: {new Date(avatar.createdAt).toLocaleDateString()}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow space-y-2 text-sm">
+        <p className="line-clamp-2"><strong className="text-muted-foreground">Demographics:</strong> {avatar.demographics}</p>
+        <p className="line-clamp-2"><strong className="text-muted-foreground">Psychographics:</strong> {avatar.psychographics}</p>
+        {avatar.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            {avatar.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="flex justify-between items-center border-t pt-4 mt-auto">
+        <Button variant="outline" size="sm" onClick={onEdit}>
+          <Edit className="mr-2 h-3.5 w-3.5" /> Edit
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={onDelete}>
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete Avatar</span>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+};
+
+
 export default function CustomerAvatarsPage() {
   const [avatars, setAvatars] = useState<CustomerAvatar[]>([]);
-  const [newName, setNewName] = useState('');
-  const [newDemographics, setNewDemographics] = useState('');
-  const [newPsychographics, setNewPsychographics] = useState('');
-  const [newChannels, setNewChannels] = useState('');
-  const [newTags, setNewTags] = useState('');
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingAvatar, setEditingAvatar] = useState<CustomerAvatar | null>(null);
+  
+  const [currentName, setCurrentName] = useState('');
+  const [currentDemographics, setCurrentDemographics] = useState('');
+  const [currentPsychographics, setCurrentPsychographics] = useState('');
+  const [currentChannels, setCurrentChannels] = useState('');
+  const [currentTags, setCurrentTags] = useState('');
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
+  
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     const storedAvatars = localStorage.getItem(LOCAL_STORAGE_AVATARS_KEY);
     if (storedAvatars) {
-      setAvatars(JSON.parse(storedAvatars));
+        try {
+            setAvatars(JSON.parse(storedAvatars));
+        } catch(e) {
+            console.error("Failed to parse avatars from localStorage", e);
+            setAvatars([]);
+        }
     }
   }, []);
 
@@ -54,150 +108,196 @@ export default function CustomerAvatarsPage() {
     localStorage.setItem(LOCAL_STORAGE_AVATARS_KEY, JSON.stringify(avatars));
   }, [avatars]);
 
-  const handleAddAvatar = (e: FormEvent) => {
+  const resetForm = () => {
+    setCurrentName('');
+    setCurrentDemographics('');
+    setCurrentPsychographics('');
+    setCurrentChannels('');
+    setCurrentTags('');
+    setCurrentImageUrl('');
+  };
+
+  const handleCreateNewClick = () => {
+    setEditingAvatar(null);
+    resetForm();
+    setShowForm(true);
+  };
+
+  const handleEditClick = (avatar: CustomerAvatar) => {
+    setEditingAvatar(avatar);
+    setCurrentName(avatar.name);
+    setCurrentDemographics(avatar.demographics);
+    setCurrentPsychographics(avatar.psychographics);
+    setCurrentChannels(avatar.preferredChannels);
+    setCurrentTags(avatar.tags.join(', '));
+    setCurrentImageUrl(avatar.imageUrl || '');
+    setShowForm(true);
+  };
+  
+  const handleBackToList = () => {
+    setShowForm(false);
+    setEditingAvatar(null);
+    resetForm();
+  };
+
+  const handleFormSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) {
+    if (!currentName.trim()) {
       toast({ title: "Error", description: "Avatar Name is required.", variant: "destructive" });
       return;
     }
-    const tagsArray = newTags.split(',').map(tag => tag.trim()).filter(tag => tag);
-    const newAvatar: CustomerAvatar = {
-      id: String(Date.now()),
-      name: newName,
-      demographics: newDemographics,
-      psychographics: newPsychographics,
-      preferredChannels: newChannels,
-      tags: tagsArray,
-      imageUrl: newImageUrl || undefined,
-      createdAt: new Date().toISOString(),
-    };
-    setAvatars(prev => [newAvatar, ...prev]);
-    setNewName('');
-    setNewDemographics('');
-    setNewPsychographics('');
-    setNewChannels('');
-    setNewTags('');
-    setNewImageUrl('');
-    toast({ title: "Customer Avatar Added", description: "New persona saved." });
+    const tagsArray = currentTags.split(',').map(tag => tag.trim()).filter(tag => tag);
+    
+    let updatedAvatars;
+
+    if (editingAvatar) {
+        const avatarToUpdate: CustomerAvatar = {
+            ...editingAvatar,
+            name: currentName,
+            demographics: currentDemographics,
+            psychographics: currentPsychographics,
+            preferredChannels: currentChannels,
+            tags: tagsArray,
+            imageUrl: currentImageUrl || undefined,
+        };
+        updatedAvatars = avatars.map(avatar => avatar.id === editingAvatar.id ? avatarToUpdate : avatar);
+        toast({ title: "Avatar Updated", description: `Customer avatar "${currentName}" has been updated.`});
+    } else {
+        const newAvatar: CustomerAvatar = {
+          id: String(Date.now()),
+          name: currentName,
+          demographics: currentDemographics,
+          psychographics: currentPsychographics,
+          preferredChannels: currentChannels,
+          tags: tagsArray,
+          imageUrl: currentImageUrl || undefined,
+          createdAt: new Date().toISOString(),
+        };
+        updatedAvatars = [newAvatar, ...avatars];
+        toast({ title: "Customer Avatar Added", description: `New persona "${currentName}" saved.` });
+    }
+    setAvatars(updatedAvatars);
+    setShowForm(false);
+    setEditingAvatar(null);
+    resetForm();
   };
 
-  const handleDeleteAvatar = (id: string) => {
-    setAvatars(prev => prev.filter(avatar => avatar.id !== id));
-    toast({ title: "Avatar Deleted", description: "Customer avatar removed." });
+  const handleDeleteAvatar = (idToDelete: string) => {
+    const avatarToDelete = avatars.find(d => d.id === idToDelete);
+    const confirmed = window.confirm(`Are you sure you want to delete the avatar "${avatarToDelete?.name || 'this avatar'}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setAvatars(prev => prev.filter(avatar => avatar.id !== idToDelete));
+    toast({ title: "Avatar Deleted", description: `Customer avatar "${avatarToDelete?.name}" removed.` });
+    if (editingAvatar?.id === idToDelete) {
+        setShowForm(false);
+        setEditingAvatar(null);
+    }
   };
 
   const filteredAvatars = avatars.filter(avatar => 
     Object.values(avatar).some(value => 
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     ) || avatar.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Define Customer Avatar</CardTitle>
-          <CardDescription>Create and manage predefined audience personas. Data saved locally.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleAddAvatar}>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Avatar Name</Label>
-                <Input id="name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g., Eco-Conscious Shopper" />
-              </div>
-              <div>
-                <Label htmlFor="imageUrl">Image URL (Optional)</Label>
-                <Input id="imageUrl" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="https://placehold.co/100x100.png" />
-              </div>
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle className="font-headline text-2xl">
+                         {showForm ? (editingAvatar ? 'Edit Customer Avatar' : 'Define Customer Avatar') : 'Customer Avatars'}
+                    </CardTitle>
+                    <CardDescription>
+                        {showForm ? 'Modify or enter details for the customer persona.' : 'Manage your audience personas. Data saved locally.'}
+                    </CardDescription>
+                </div>
+                 {!showForm ? (
+                    <Button onClick={handleCreateNewClick}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Avatar
+                    </Button>
+                ) : (
+                    <Button variant="outline" onClick={handleBackToList}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Avatar List
+                    </Button>
+                )}
             </div>
-            <div>
-              <Label htmlFor="demographics">Demographics</Label>
-              <Textarea id="demographics" value={newDemographics} onChange={(e) => setNewDemographics(e.target.value)} placeholder="e.g., Age: 25-35, Female, Urban, $50k-$75k income" />
-            </div>
-            <div>
-              <Label htmlFor="psychographics">Psychographics (Pain Points, Goals, Values)</Label>
-              <Textarea id="psychographics" value={newPsychographics} onChange={(e) => setNewPsychographics(e.target.value)} placeholder="e.g., Values sustainability, seeks convenience, struggles with time management." />
-            </div>
-             <div>
-              <Label htmlFor="channels">Preferred Channels (Comma-separated)</Label>
-              <Input id="channels" value={newChannels} onChange={(e) => setNewChannels(e.target.value)} placeholder="e.g., Instagram, Pinterest, Eco-blogs" />
-            </div>
-            <div>
-              <Label htmlFor="tags">Tags (Comma-separated)</Label>
-              <Input id="tags" value={newTags} onChange={(e) => setNewTags(e.target.value)} placeholder="e.g., Millenial, Environment, Online Shopper" />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="flex items-center gap-1">
-              <PlusCircle className="h-4 w-4" /> Add Avatar
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline text-xl">Stored Customer Avatars</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="search"
-                placeholder="Search avatars..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 w-full"
-              />
+        {showForm ? (
+            <form onSubmit={handleFormSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="name">Avatar Name *</Label>
+                        <Input id="name" value={currentName} onChange={(e) => setCurrentName(e.target.value)} placeholder="e.g., Eco-Conscious Shopper" required/>
+                    </div>
+                    <div>
+                        <Label htmlFor="imageUrl">Image URL (Optional)</Label>
+                        <Input id="imageUrl" value={currentImageUrl} onChange={(e) => setCurrentImageUrl(e.target.value)} placeholder="https://placehold.co/100x100.png" />
+                    </div>
+                </div>
+                <div>
+                    <Label htmlFor="demographics">Demographics</Label>
+                    <Textarea id="demographics" value={currentDemographics} onChange={(e) => setCurrentDemographics(e.target.value)} placeholder="e.g., Age: 25-35, Female, Urban, $50k-$75k income" />
+                </div>
+                <div>
+                    <Label htmlFor="psychographics">Psychographics (Pain Points, Goals, Values)</Label>
+                    <Textarea id="psychographics" value={currentPsychographics} onChange={(e) => setCurrentPsychographics(e.target.value)} placeholder="e.g., Values sustainability, seeks convenience, struggles with time management." />
+                </div>
+                <div>
+                    <Label htmlFor="channels">Preferred Channels (Comma-separated)</Label>
+                    <Input id="channels" value={currentChannels} onChange={(e) => setCurrentChannels(e.target.value)} placeholder="e.g., Instagram, Pinterest, Eco-blogs" />
+                </div>
+                <div>
+                    <Label htmlFor="tags">Tags (Comma-separated)</Label>
+                    <Input id="tags" value={currentTags} onChange={(e) => setCurrentTags(e.target.value)} placeholder="e.g., Millenial, Environment, Online Shopper" />
+                </div>
+                <CardFooter className="p-0 pt-4 flex justify-end space-x-2">
+                    <Button type="button" variant="outline" onClick={handleBackToList}>Cancel</Button>
+                    <Button type="submit">{editingAvatar ? 'Save Changes' : 'Add Avatar'}</Button>
+                </CardFooter>
+            </form>
+        ) : (
+          <>
+            <div className="mb-6">
+                <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    type="search"
+                    placeholder="Search avatars..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 w-full sm:w-1/2 md:w-1/3"
+                />
+                </div>
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Avatar</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="max-w-xs">Demographics</TableHead>
-                  <TableHead className="max-w-xs">Psychographics</TableHead>
-                  <TableHead>Tags</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAvatars.map((avatar) => (
-                  <TableRow key={avatar.id}>
-                    <TableCell>
-                      <Image 
-                        src={avatar.imageUrl || `https://placehold.co/64x64.png?text=${avatar.name.charAt(0)}`} 
-                        alt={avatar.name} 
-                        width={40} height={40} 
-                        className="rounded-full object-cover"
-                        data-ai-hint="person profile" 
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{avatar.name}</TableCell>
-                    <TableCell className="text-xs max-w-xs break-words">{avatar.demographics}</TableCell>
-                    <TableCell className="text-xs max-w-xs break-words">{avatar.psychographics}</TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="flex flex-wrap gap-1">
-                        {avatar.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAvatar(avatar.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive"/>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          {filteredAvatars.length === 0 && <p className="text-center text-muted-foreground mt-4">No customer avatars stored yet.</p>}
+            {filteredAvatars.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredAvatars.map((avatar) => (
+                        <AvatarDisplayCard 
+                            key={avatar.id} 
+                            avatar={avatar}
+                            onEdit={() => handleEditClick(avatar)}
+                            onDelete={() => handleDeleteAvatar(avatar.id)}
+                        />
+                    ))}
+                </div>
+            ) : (
+                 <div className="text-center py-12">
+                    <UserCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <p className="text-muted-foreground text-lg mt-4 mb-2">
+                        {searchTerm ? 'No avatars match your search.' : 'No customer avatars defined yet.'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                        {searchTerm ? 'Try a different search term or clear filters.' : 'Click the "Add New Avatar" button to create your first persona!'}
+                    </p>
+                </div>
+            )}
+          </>
+        )}
         </CardContent>
-      </Card>
-    </div>
+    </Card>
   );
 }
