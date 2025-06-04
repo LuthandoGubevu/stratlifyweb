@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -106,7 +107,7 @@ export default function ProfilePage() {
   if (!user) return <p>Please log in to view your profile.</p>;
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-8">
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-2xl">User Profile</CardTitle>

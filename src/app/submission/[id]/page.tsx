@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, Timestamp, addDoc, collection, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -85,6 +86,7 @@ export default function SubmissionViewerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+  const { toast } = useToast(); 
 
   useEffect(() => {
     if (!submissionId) {
@@ -129,7 +131,7 @@ export default function SubmissionViewerPage() {
     
     return () => unsubscribeNotes();
 
-  }, [submissionId, router]);
+  }, [submissionId, router, toast]);
 
 
   const handleAddNote = async (e: FormEvent) => {
@@ -153,12 +155,9 @@ export default function SubmissionViewerPage() {
     }
   };
   
-  const { toast } = useToast(); // Must be called unconditionally
-
-
   if (loading) {
     return (
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
         <Skeleton className="h-10 w-3/4" />
         <Skeleton className="h-6 w-1/2" />
         <Skeleton className="h-40 w-full" />
@@ -170,7 +169,7 @@ export default function SubmissionViewerPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl text-center">
+      <div className="p-4 sm:p-6 lg:p-8 text-center">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -182,7 +181,7 @@ export default function SubmissionViewerPage() {
   }
 
   if (!submission) {
-    return <div className="container mx-auto p-4">Submission data could not be loaded.</div>;
+    return <div className="p-4">Submission data could not be loaded.</div>;
   }
   
   const formatDate = (timestamp: Timestamp | undefined) => {
@@ -191,7 +190,7 @@ export default function SubmissionViewerPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline text-3xl text-primary">{submission.submissionTitle}</CardTitle>
@@ -314,5 +313,3 @@ export default function SubmissionViewerPage() {
     </div>
   );
 }
-
-    

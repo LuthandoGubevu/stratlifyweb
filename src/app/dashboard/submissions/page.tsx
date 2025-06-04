@@ -300,7 +300,7 @@ export default function SubmissionsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="max-w-3xl mx-auto">
+      <Card>
         <CardHeader>
             <div className="flex justify-between items-center">
                 <div>
@@ -394,7 +394,7 @@ export default function SubmissionsPage() {
       </Card>
 
       {!showForm && (
-        <Card className="max-w-3xl mx-auto mt-6">
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle className="font-headline text-xl flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary"/>Campaign Submissions Log</CardTitle>
             <CardDescription>This is a list of submissions saved in your browser. Click to view details or edit. (Firestore saved entries are also listed here).</CardDescription>
