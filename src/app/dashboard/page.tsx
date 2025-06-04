@@ -245,27 +245,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="hover:shadow-lg transition-shadow duration-200 h-full">
-            <CardHeader>
-              <CardTitle className="font-headline text-primary">Ad Concepts per Persona</CardTitle>
-              <CardDescription>Visualize the distribution and performance of ad concepts across different customer avatars.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-center min-h-[300px] h-full">
-              <Image 
-                src="https://placehold.co/600x300.png" 
-                alt="Ad Concepts per Persona Chart Placeholder" 
-                width={600} 
-                height={300} 
-                className="rounded-md object-contain"
-                data-ai-hint="bar chart analytics"
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"> {/* Changed from lg:grid-cols-3 */}
+        {/* Removed Ad Concepts per Persona Card */}
+        <div className="lg:col-span-1 space-y-6"> {/* This will now take up one half on large screens */}
           <Card className="hover:shadow-lg transition-shadow duration-200">
             <CardHeader>
               <CardTitle className="font-headline text-md text-primary">Recent Activity</CardTitle>
@@ -289,7 +271,8 @@ export default function DashboardPage() {
                 </CardFooter>
             )}
           </Card>
-
+        </div>
+        <div className="lg:col-span-1 space-y-6"> {/* This will now take up the other half on large screens */}
           {recommendations.length > 0 && (
             <Card className="hover:shadow-lg transition-shadow duration-200">
                 <CardHeader>
