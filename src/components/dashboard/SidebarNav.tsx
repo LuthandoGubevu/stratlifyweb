@@ -99,8 +99,8 @@ export function SidebarNav() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-2 flex justify-center items-center group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:px-0">
         <Link href="/dashboard" className="flex items-center gap-2 w-full justify-start group-data-[collapsible=icon]:justify-center">
-          <Image src="/Stratify-Logo.png" alt="Stratify Logo" width={32} height={32} className="h-8 w-8" />
-          <span className="font-headline text-xl font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">
+          <Image src="/Stratify-Logo.png" alt="Stratlify Logo" width={32} height={32} className="h-8 w-8" />
+          <span className="font-headline text-xl font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
             Stratlify
           </span>
         </Link>
