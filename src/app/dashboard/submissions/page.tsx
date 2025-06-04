@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Send, ListChecks, Eye } from 'lucide-react';
+import { Send, ListChecks, Eye, Copy } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 import type { CustomerAvatar } from '../customer-avatars/page';
@@ -24,9 +24,13 @@ import type { FeatureBenefitPair } from '../features-to-benefits/page';
 import type { RoadmapEntry } from '../creative-roadmap/page';
 import type { HeadlinePattern } from '../headline-patterns/page';
 import type { Mechanism } from '../mechanization/page';
-import type { AdCreationFormValues } from '../ad-creation/page.tsx'; // Import AdCreationFormValues
+import type { AdCreationFormValues } from '../ad-creation/page';
 
-interface StoredAdCreationEntry { // Helper interface for what's stored in localStorage for ads
+// Firestore imports
+import { db } from '@/lib/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+
+interface StoredAdCreationEntry {
   id: string;
   data: AdCreationFormValues;
   createdAt: string;
@@ -39,14 +43,14 @@ const LOCAL_STORAGE_FB_KEY = 'featuresBenefitsEntries';
 const LOCAL_STORAGE_ROADMAP_KEY = 'creativeRoadmapEntries';
 const LOCAL_STORAGE_HEADLINES_KEY = 'headlinePatterns';
 const LOCAL_STORAGE_MECHANISMS_KEY = 'productMechanisms';
-const LOCAL_STORAGE_AD_CREATION_KEY = 'adCreationEntries'; // Key for Ad Creation data
-const LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY = 'compiledCampaignSubmissions';
+const LOCAL_STORAGE_AD_CREATION_KEY = 'adCreationEntries';
+const LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY = 'compiledCampaignSubmissions'; // For local display
 
-interface CompiledCampaignSubmission {
-  id: string;
+export interface CompiledCampaignSubmission { // Exporting for use in viewer page
+  id: string; // This will be localStorage ID for local list, Firestore ID for actual stored doc
   submissionTitle: string;
   submittedBy: string;
-  submittedAt: string;
+  submittedAt: string | Timestamp; // string for localStorage, Timestamp for Firestore
   customerAvatar?: CustomerAvatar;
   ideaTracker?: Idea;
   massDesire?: MassDesire;
@@ -54,7 +58,8 @@ interface CompiledCampaignSubmission {
   creativeRoadmap?: RoadmapEntry;
   headlinePattern?: HeadlinePattern;
   mechanization?: Mechanism;
-  adCreation?: AdCreationFormValues; // Add Ad Creation data
+  adCreation?: AdCreationFormValues;
+  firestoreId?: string; // To store the Firestore document ID for share links
 }
 
 export default function SubmissionsPage() {
@@ -67,7 +72,7 @@ export default function SubmissionsPage() {
   const [selectedRoadmapEntry, setSelectedRoadmapEntry] = useState('');
   const [selectedHeadlinePattern, setSelectedHeadlinePattern] = useState('');
   const [selectedMechanism, setSelectedMechanism] = useState('');
-  const [selectedAdCreation, setSelectedAdCreation] = useState(''); // State for selected ad
+  const [selectedAdCreation, setSelectedAdCreation] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -79,10 +84,10 @@ export default function SubmissionsPage() {
   const [roadmapEntries, setRoadmapEntries] = useState<RoadmapEntry[]>([]);
   const [headlinePatterns, setHeadlinePatterns] = useState<HeadlinePattern[]>([]);
   const [mechanisms, setMechanisms] = useState<Mechanism[]>([]);
-  const [adCreationEntries, setAdCreationEntries] = useState<StoredAdCreationEntry[]>([]); // State for Ad Creation entries
+  const [adCreationEntries, setAdCreationEntries] = useState<StoredAdCreationEntry[]>([]);
   
   const [compiledSubmissions, setCompiledSubmissions] = useState<CompiledCampaignSubmission[]>([]);
-  const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<CompiledCampaignSubmission | null>(null);
+  const [lastFirestoreSubmissionId, setLastFirestoreSubmissionId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -103,12 +108,13 @@ export default function SubmissionsPage() {
     loadData<RoadmapEntry>(LOCAL_STORAGE_ROADMAP_KEY, setRoadmapEntries, "Roadmap Entries");
     loadData<HeadlinePattern>(LOCAL_STORAGE_HEADLINES_KEY, setHeadlinePatterns, "Headline Patterns");
     loadData<Mechanism>(LOCAL_STORAGE_MECHANISMS_KEY, setMechanisms, "Mechanisms");
-    loadData<StoredAdCreationEntry>(LOCAL_STORAGE_AD_CREATION_KEY, setAdCreationEntries, "Ad Creation Entries"); // Load Ad Creation
-    loadData<CompiledCampaignSubmission>(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, setCompiledSubmissions, "Compiled Submissions");
+    loadData<StoredAdCreationEntry>(LOCAL_STORAGE_AD_CREATION_KEY, setAdCreationEntries, "Ad Creation Entries");
+    loadData<CompiledCampaignSubmission>(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, setCompiledSubmissions, "Compiled Submissions (Local)");
 
   }, [toast]);
 
   useEffect(() => {
+    // Save local list to localStorage
     if (compiledSubmissions.length > 0 || localStorage.getItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY)) {
         localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(compiledSubmissions));
     }
@@ -117,6 +123,7 @@ export default function SubmissionsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setLastFirestoreSubmissionId(null);
     
     if (!submissionTitle.trim() || !submittedBy.trim()) {
       toast({ title: "Missing Information", description: "Submission Title and Submitted By are required.", variant: "destructive" });
@@ -130,41 +137,63 @@ export default function SubmissionsPage() {
         return found?.data;
     };
 
-
-    const campaignData: CompiledCampaignSubmission = {
-      id: String(Date.now()),
+    const firestoreCampaignData = {
       submissionTitle,
       submittedBy,
-      submittedAt: new Date().toISOString(),
-      customerAvatar: findItemById(avatars, selectedAvatar),
-      ideaTracker: findItemById(adConcepts, selectedAdConcept),
-      massDesire: findItemById(massDesires, selectedMassDesire),
-      featuresToBenefits: findItemById(featuresBenefits, selectedFeatureBenefit),
-      creativeRoadmap: findItemById(roadmapEntries, selectedRoadmapEntry),
-      headlinePattern: findItemById(headlinePatterns, selectedHeadlinePattern),
-      mechanization: findItemById(mechanisms, selectedMechanism),
-      adCreation: findAdCreationById(adCreationEntries, selectedAdCreation), // Include Ad Creation data
+      submittedAt: Timestamp.now(), // Firestore Timestamp
+      customerAvatar: findItemById(avatars, selectedAvatar) || null,
+      ideaTracker: findItemById(adConcepts, selectedAdConcept) || null,
+      massDesire: findItemById(massDesires, selectedMassDesire) || null,
+      featuresToBenefits: findItemById(featuresBenefits, selectedFeatureBenefit) || null,
+      creativeRoadmap: findItemById(roadmapEntries, selectedRoadmapEntry) || null,
+      headlinePattern: findItemById(headlinePatterns, selectedHeadlinePattern) || null,
+      mechanization: findItemById(mechanisms, selectedMechanism) || null,
+      adCreation: findAdCreationById(adCreationEntries, selectedAdCreation) || null,
     };
     
-    setCompiledSubmissions(prev => [campaignData, ...prev]);
-    
-    toast({
-      title: 'Campaign Submitted',
-      description: `"${submissionTitle}" has been compiled and saved.`,
+    try {
+      const docRef = await addDoc(collection(db, "submissions"), firestoreCampaignData);
+      setLastFirestoreSubmissionId(docRef.id);
+      toast({
+        title: 'Campaign Submitted to Firestore!',
+        description: `"${submissionTitle}" saved with ID: ${docRef.id}. Share link available.`,
+      });
+
+      // Also update local storage list (optional, could be removed if dashboard reads from Firestore)
+      const localCampaignData: CompiledCampaignSubmission = {
+        ...firestoreCampaignData,
+        id: String(Date.now()), // Local unique ID
+        submittedAt: new Date().toISOString(), // String for local
+        firestoreId: docRef.id
+      };
+      setCompiledSubmissions(prev => [localCampaignData, ...prev]);
+
+    } catch (error) {
+      console.error("Error adding document to Firestore: ", error);
+      toast({
+        title: 'Firestore Submission Failed',
+        description: 'Could not save the campaign to the database. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+       // Reset form partly, keep dropdowns if user wants to make similar submission
+      setSubmissionTitle('');
+      setSubmittedBy('');
+      // Optionally reset all select fields:
+      // setSelectedAvatar(''); setSelectedAdConcept(''); ...etc.
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (!lastFirestoreSubmissionId) return;
+    const link = `${window.location.origin}/submission/${lastFirestoreSubmissionId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      toast({ title: "Link Copied!", description: "Shareable link copied to clipboard." });
+    }).catch(err => {
+      toast({ title: "Copy Failed", description: "Could not copy link.", variant: "destructive" });
+      console.error('Failed to copy link: ', err);
     });
-    
-    // Reset form
-    setSubmissionTitle('');
-    setSubmittedBy('');
-    setSelectedAvatar('');
-    setSelectedAdConcept('');
-    setSelectedMassDesire('');
-    setSelectedFeatureBenefit('');
-    setSelectedRoadmapEntry('');
-    setSelectedHeadlinePattern('');
-    setSelectedMechanism('');
-    setSelectedAdCreation(''); // Reset selected ad
-    setIsSubmitting(false);
   };
 
   return (
@@ -172,7 +201,7 @@ export default function SubmissionsPage() {
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline text-2xl">New Campaign Submission</CardTitle>
-          <CardDescription>Compile elements from various modules into a single campaign submission. Data is sourced from your entries on other pages and saved locally.</CardDescription>
+          <CardDescription>Compile elements from various modules into a single campaign submission. Data is saved to Firestore and locally.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
@@ -277,11 +306,21 @@ export default function SubmissionsPage() {
             </Accordion>
 
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col items-start space-y-4">
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               <Send className="mr-2 h-4 w-4" />
               {isSubmitting ? 'Submitting...' : 'Compile & Save Submission'}
             </Button>
+            {lastFirestoreSubmissionId && (
+              <div className="w-full p-3 border rounded-md bg-secondary/50 flex items-center justify-between">
+                <p className="text-sm text-foreground">
+                  Share link for last submission: <code className="bg-muted px-1 rounded text-xs">{window.location.origin}/submission/{lastFirestoreSubmissionId}</code>
+                </p>
+                <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                  <Copy className="mr-2 h-3 w-3"/> Copy Link
+                </Button>
+              </div>
+            )}
           </CardFooter>
         </form>
       </Card>
@@ -289,7 +328,8 @@ export default function SubmissionsPage() {
       {compiledSubmissions.length > 0 && (
         <Card className="max-w-3xl mx-auto mt-6">
           <CardHeader>
-            <CardTitle className="font-headline text-xl flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary"/>Saved Campaign Submissions</CardTitle>
+            <CardTitle className="font-headline text-xl flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary"/>Locally Saved Campaign Submissions</CardTitle>
+            <CardDescription>This is a list of submissions saved in your browser's local storage. For permanent, shareable submissions, use the "Compile & Save Submission" button above which saves to Firestore.</CardDescription>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
@@ -299,27 +339,27 @@ export default function SubmissionsPage() {
                     <div className="flex justify-between items-center w-full">
                       <span>{submission.submissionTitle}</span>
                       <span className="text-xs text-muted-foreground mr-2">
-                        By: {submission.submittedBy} on {new Date(submission.submittedAt).toLocaleDateString()}
+                        By: {submission.submittedBy} on {new Date(submission.submittedAt as string).toLocaleDateString()}
+                        {submission.firestoreId && <span className="ml-2 text-green-600">(Saved to DB)</span>}
                       </span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-2 text-sm">
                     <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs">
-                      {JSON.stringify(submission, null, 2)}
+                      {JSON.stringify(submission, (key, value) => 
+                        key === 'submittedAt' && typeof value === 'object' && value && 'seconds' in value ? new Date(value.seconds * 1000).toISOString() : value, 
+                      2)}
                     </pre>
                   </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
-             {selectedSubmissionDetail && (
-                <div className="mt-4 p-4 border rounded-md bg-background">
-                    <h3 className="font-semibold mb-2">{selectedSubmissionDetail.submissionTitle} Details:</h3>
-                    <pre className="text-xs overflow-x-auto">{JSON.stringify(selectedSubmissionDetail, null, 2)}</pre>
-                </div>
-            )}
           </CardContent>
         </Card>
       )}
     </div>
   );
 }
+
+
+    
