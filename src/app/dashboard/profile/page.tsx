@@ -15,20 +15,21 @@ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'fire
 import { storage } from '@/lib/firebase'; // Import Firebase storage instance
 import { Edit3 } from 'lucide-react';
 
+const LOCAL_STORAGE_DARK_MODE_KEY = 'stratify-darkMode';
+
 export default function ProfilePage() {
   const { user, loading: authLoading, setError: setAuthError, error: authError } = useAuth();
   const { toast } = useToast();
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-  // No longer need photoURL state for input, will use imagePreviewUrl and user.photoURL
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true); // Remains a UI mockup for now
   const [darkMode, setDarkMode] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,9 +42,32 @@ export default function ProfilePage() {
     if (user) {
       setDisplayName(user.displayName || '');
       setEmail(user.email || '');
-      setImagePreviewUrl(user.photoURL || null); // Initialize preview with current user photo
+      setImagePreviewUrl(user.photoURL || null);
+    }
+    // Load dark mode preference from localStorage
+    const storedDarkMode = localStorage.getItem(LOCAL_STORAGE_DARK_MODE_KEY);
+    if (storedDarkMode) {
+      const isDark = storedDarkMode === 'true';
+      setDarkMode(isDark);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, [user]);
+
+  const handleDarkModeToggle = (isDark: boolean) => {
+    setDarkMode(isDark);
+    localStorage.setItem(LOCAL_STORAGE_DARK_MODE_KEY, String(isDark));
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      toast({ title: "Dark Mode Enabled"});
+    } else {
+      document.documentElement.classList.remove('dark');
+      toast({ title: "Light Mode Enabled"});
+    }
+  };
 
   const getInitials = (name: string) => {
     if (!name) return 'AD';
@@ -69,7 +93,6 @@ export default function ProfilePage() {
       reader.readAsDataURL(file);
     } else {
       setSelectedFile(null);
-      // Don't reset imagePreviewUrl here, user might cancel selection
       // It will revert to user.photoURL if no file is ultimately uploaded
     }
   };
@@ -98,12 +121,11 @@ export default function ProfilePage() {
         await uploadBytes(fileStorageRef, selectedFile);
         newPhotoURLForUpdate = await getDownloadURL(fileStorageRef);
         
-        setImagePreviewUrl(newPhotoURLForUpdate); // Update preview to the new URL from storage
-        setSelectedFile(null); // Reset selected file state
+        setImagePreviewUrl(newPhotoURLForUpdate); 
+        setSelectedFile(null); 
         setIsUploadingImage(false);
       }
 
-      // Check if display name or photo URL actually changed
       const nameChanged = displayName !== (user.displayName || '');
       const photoChanged = newPhotoURLForUpdate !== (user.photoURL || null);
 
@@ -112,6 +134,8 @@ export default function ProfilePage() {
           displayName,
           photoURL: newPhotoURLForUpdate, 
         });
+        // Manually trigger re-render of UserNav if needed by updating user context or similar
+        // For now, local state and Firebase Auth user object will update.
         toast({ title: "Profile Updated", description: "Your profile details have been saved." });
       } else {
         toast({ title: "No Changes", description: "No new information to save." });
@@ -251,7 +275,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="notifications" className="font-medium">Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">Receive updates and alerts via email.</p>
+              <p className="text-sm text-muted-foreground">Receive updates and alerts via email. (Currently UI only)</p>
             </div>
             <Switch id="notifications" checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
           </div>
@@ -260,11 +284,12 @@ export default function ProfilePage() {
               <Label htmlFor="dark-mode" className="font-medium">Dark Mode</Label>
               <p className="text-sm text-muted-foreground">Toggle dark theme for the application.</p>
             </div>
-            <Switch id="dark-mode" checked={darkMode} onCheckedChange={setDarkMode} />
+            <Switch id="dark-mode" checked={darkMode} onCheckedChange={handleDarkModeToggle} />
           </div>
-          <Button variant="outline" onClick={() => toast({title: "Settings Saved (Placeholder)", description: "App settings would be saved here."})}>Save Settings</Button>
+          <Button variant="outline" onClick={() => toast({title: "Settings (Placeholder)", description: "Dark mode preference is saved automatically. Other settings would be saved here."})}>Save Other Settings</Button>
         </CardContent>
       </Card>
     </div>
   );
 }
+
