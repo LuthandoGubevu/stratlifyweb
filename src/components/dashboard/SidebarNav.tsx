@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation'; // Added useRouter
+import { usePathname, useRouter } from 'next/navigation'; 
 import {
   LayoutDashboard,
   Lightbulb,
@@ -19,7 +19,7 @@ import {
   BarChart,
   Settings,
   Loader2,
-  LogOut // Added LogOut icon
+  LogOut 
 } from 'lucide-react';
 import {
   Sidebar,
@@ -34,7 +34,7 @@ import {
   SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button'; // Added Button for logout
+import Image from 'next/image';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -73,12 +73,12 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const { loading: authLoading, signOut, user } = useAuth(); // Added signOut and user
-  const router = useRouter(); // Added useRouter
+  const { loading: authLoading, signOut, user } = useAuth(); 
+  const router = useRouter(); 
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/'); // Redirect to landing page
+    router.push('/'); 
   };
 
   const renderNavItem = (item: any, index: number) => (
@@ -97,8 +97,13 @@ export function SidebarNav() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-0">
-        {/* Placeholder for logo or app name if needed in header */}
+      <SidebarHeader className="p-2 flex justify-center items-center group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:px-0">
+        <Link href="/dashboard" className="flex items-center gap-2 w-full justify-start group-data-[collapsible=icon]:justify-center">
+          <Image src="/Stratify-Logo.png" alt="Stratify Logo" width={32} height={32} className="h-8 w-8" />
+          <span className="font-headline text-xl font-semibold text-sidebar-primary group-data-[collapsible=icon]:hidden">
+            Stratlify
+          </span>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -135,4 +140,3 @@ export function SidebarNav() {
     </Sidebar>
   );
 }
-

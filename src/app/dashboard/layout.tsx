@@ -2,7 +2,7 @@ import { AuthGuard } from '@/components/AuthGuard';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { UserNav } from '@/components/dashboard/UserNav';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { Rocket } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function DashboardLayout({
@@ -19,7 +19,7 @@ export default function DashboardLayout({
             <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
               <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
                 <Link href="/dashboard" className="flex items-center gap-2 text-xl font-headline font-semibold text-primary md:hidden">
-                  <Rocket className="h-6 w-6 text-accent" />
+                  <Image src="/Stratify-Logo.png" alt="Stratlify Logo" width={24} height={24} className="h-6 w-6" />
                   Stratlify
                 </Link>
                 <div className="flex-1 md:flex-none">

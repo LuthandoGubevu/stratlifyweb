@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Rocket, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -46,7 +47,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
            <div className="inline-flex justify-center items-center gap-2 mb-4">
-            <Rocket className="h-10 w-10 text-primary" />
+            <Image src="/Stratify-Logo.png" alt="Stratify Logo" width={40} height={40} className="h-10 w-10" />
             <CardTitle className="text-3xl font-headline">Stratlify</CardTitle>
           </div>
           <CardDescription>Create your account to get started.</CardDescription>
