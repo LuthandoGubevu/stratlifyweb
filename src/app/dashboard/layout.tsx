@@ -1,4 +1,6 @@
 
+'use client';
+
 import { AuthGuard } from '@/components/AuthGuard';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { UserNav } from '@/components/dashboard/UserNav';
