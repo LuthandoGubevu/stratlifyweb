@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { updateProfile, updateEmail, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { Switch } from "@/components/ui/switch";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase'; // Import Firebase storage instance
+import { storage, auth } from '@/lib/firebase'; // Import Firebase storage and auth instance
 import { Edit3 } from 'lucide-react';
 
 const LOCAL_STORAGE_DARK_MODE_KEY = 'stratify-darkMode';
@@ -29,7 +29,7 @@ export default function ProfilePage() {
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true); // Remains a UI mockup for now
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true); 
   const [darkMode, setDarkMode] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +44,6 @@ export default function ProfilePage() {
       setEmail(user.email || '');
       setImagePreviewUrl(user.photoURL || null);
     }
-    // Load dark mode preference from localStorage
     const storedDarkMode = localStorage.getItem(LOCAL_STORAGE_DARK_MODE_KEY);
     if (storedDarkMode) {
       const isDark = storedDarkMode === 'true';
@@ -93,7 +92,6 @@ export default function ProfilePage() {
       reader.readAsDataURL(file);
     } else {
       setSelectedFile(null);
-      // It will revert to user.photoURL if no file is ultimately uploaded
     }
   };
 
@@ -103,17 +101,20 @@ export default function ProfilePage() {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+        toast({ title: "Not Authenticated", description: "You must be logged in to update your profile.", variant: "destructive" });
+        return;
+    }
 
     setIsSubmittingProfile(true);
-    setIsUploadingImage(false);
+    // isUploadingImage will be set to true only if there's a file selected
     setAuthError(null);
 
     let newPhotoURLForUpdate = user.photoURL; 
 
     try {
       if (selectedFile) {
-        setIsUploadingImage(true);
+        setIsUploadingImage(true); // Set to true before upload attempt
         const filePath = `profileImages/${user.uid}/${Date.now()}_${selectedFile.name}`;
         const fileStorageRef = storageRef(storage, filePath);
         
@@ -123,37 +124,46 @@ export default function ProfilePage() {
         
         setImagePreviewUrl(newPhotoURLForUpdate); 
         setSelectedFile(null); 
-        setIsUploadingImage(false);
+        // No need to set isUploadingImage to false here, finally block will handle it
       }
 
       const nameChanged = displayName !== (user.displayName || '');
       const photoChanged = newPhotoURLForUpdate !== (user.photoURL || null);
 
       if (nameChanged || photoChanged) {
-        await updateProfile(user, {
+        await updateProfile(auth.currentUser!, { // Ensure auth.currentUser is used as 'user' from context might be stale
           displayName,
           photoURL: newPhotoURLForUpdate, 
         });
-        // Manually trigger re-render of UserNav if needed by updating user context or similar
-        // For now, local state and Firebase Auth user object will update.
+        // Manually update the user object in the AuthContext if necessary, or rely on onAuthStateChanged
         toast({ title: "Profile Updated", description: "Your profile details have been saved." });
-      } else {
+      } else if (!selectedFile) { // Only show "No changes" if no file was selected AND name didn't change
         toast({ title: "No Changes", description: "No new information to save." });
+      } else if (selectedFile && !photoChanged && !nameChanged){
+        // This case means an image was uploaded but it's the same as the old one, 
+        // or it was uploaded and profile updated.
+        // The success toast from image upload + profile update would cover this.
+        // If only image changed, the "Profile Updated" toast is sufficient.
       }
+
 
     } catch (error: any) {
       console.error("Profile update error:", error);
       setAuthError(error.message);
-      toast({ title: "Update Failed", description: error.message, variant: "destructive" });
-      setIsUploadingImage(false);
+      toast({ title: "Update Failed", description: `Error: ${error.message}. Check Storage Rules if it's a permission issue.`, variant: "destructive" });
     } finally {
+      console.log("Profile update finally block reached. Resetting states.");
+      setIsUploadingImage(false); 
       setIsSubmittingProfile(false);
     }
   };
   
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !user.email) return; 
+    if (!user || !user.email) {
+        toast({ title: "Not Authenticated", description: "User not found for password update.", variant: "destructive" });
+        return;
+    }
     if (newPassword !== confirmNewPassword) {
       setAuthError("New passwords do not match.");
       toast({ title: "Password Mismatch", description: "New passwords do not match.", variant: "destructive" });
@@ -170,8 +180,8 @@ export default function ProfilePage() {
 
     try {
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
+      await reauthenticateWithCredential(auth.currentUser!, credential); // Use auth.currentUser!
+      await updatePassword(auth.currentUser!, newPassword); // Use auth.currentUser!
       toast({ title: "Password Updated", description: "Your password has been changed successfully." });
       setCurrentPassword('');
       setNewPassword('');
@@ -286,7 +296,7 @@ export default function ProfilePage() {
             </div>
             <Switch id="dark-mode" checked={darkMode} onCheckedChange={handleDarkModeToggle} />
           </div>
-          <Button variant="outline" onClick={() => toast({title: "Settings (Placeholder)", description: "Dark mode preference is saved automatically. Other settings would be saved here."})}>Save Other Settings</Button>
+          <Button variant="outline" onClick={() => toast({title: "Settings Mockup", description: "Dark mode preference is saved automatically. Other general app settings could be saved here."})}>Save Other Settings</Button>
         </CardContent>
       </Card>
     </div>
