@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBCF0I2mGDVXLvorGYx-wfYLkdSp86nrYw",
   authDomain: "stratifyai-d82ce.firebaseapp.com",
   projectId: "stratifyai-d82ce",
-  storageBucket: "stratifyai-d82ce.appspot.com",
+  storageBucket: "stratifyai-d82ce.firebasestorage.app", // Updated line
   messagingSenderId: "716269216529",
   appId: "1:716269216529:web:f5a20f79f72e48a29f62b0",
   measurementId: "G-RRPPBQV3MY"
@@ -38,3 +38,4 @@ if (typeof window !== 'undefined') {
 }
 
 export { app, auth, db, storage, analytics };
+
