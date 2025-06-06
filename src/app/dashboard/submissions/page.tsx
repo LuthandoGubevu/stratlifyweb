@@ -18,7 +18,6 @@ import { Send, ListChecks, Eye, Copy, PlusCircle, ArrowLeft, Trash2, Edit, UserC
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import SubmissionDetailTile from '@/components/dashboard/submissions/SubmissionDetailTile';
 
-
 import type { CustomerAvatar } from '../customer-avatars/page';
 import type { Idea } from '../idea-tracker/page';
 import type { MassDesire } from '../mass-desires/page';
@@ -26,11 +25,11 @@ import type { FeatureBenefitPair } from '../features-to-benefits/page';
 import type { RoadmapEntry } from '../creative-roadmap/page';
 import type { HeadlinePattern } from '../headline-patterns/page';
 import type { Mechanism } from '../mechanization/page';
-import type { AdCreationFormValues, StoredAdCreationEntry } from '../ad-creation/page'; 
+import type { AdCreationFormValues, StoredAdCreationEntry } from '../ad-creation/page';
 
 // Firestore imports
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore'; 
+import { collection, addDoc, Timestamp, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
 const LOCAL_STORAGE_AVATARS_KEY = 'customerAvatarsEntries';
 const LOCAL_STORAGE_IDEAS_KEY = 'ideaTrackerEntries';
@@ -40,13 +39,13 @@ const LOCAL_STORAGE_ROADMAP_KEY = 'creativeRoadmapEntries';
 const LOCAL_STORAGE_HEADLINES_KEY = 'headlinePatterns';
 const LOCAL_STORAGE_MECHANISMS_KEY = 'productMechanisms';
 const LOCAL_STORAGE_AD_CREATION_KEY = 'adCreationEntries';
-const LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY = 'compiledCampaignSubmissions'; 
+const LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY = 'compiledCampaignSubmissions';
 
-export interface CompiledCampaignSubmission { 
-  id: string; 
+export interface CompiledCampaignSubmission {
+  id: string;
   submissionTitle: string;
   submittedBy: string;
-  submittedAt: string | Timestamp; 
+  submittedAt: string | Timestamp; // Store as ISO string in local state/storage, Timestamp in Firestore
   customerAvatarId?: string;
   ideaTrackerId?: string;
   massDesireId?: string;
@@ -55,6 +54,7 @@ export interface CompiledCampaignSubmission {
   headlinePatternId?: string;
   mechanizationId?: string;
   adCreationId?: string;
+  // Full objects for easier display, populated on load/compile
   customerAvatar?: CustomerAvatar | null;
   ideaTracker?: Idea | null;
   massDesire?: MassDesire | null;
@@ -63,7 +63,7 @@ export interface CompiledCampaignSubmission {
   headlinePattern?: HeadlinePattern | null;
   mechanization?: Mechanism | null;
   adCreation?: AdCreationFormValues | null;
-  firestoreId?: string; 
+  firestoreId?: string; // ID of the document in Firestore
 }
 
 interface TileInfo {
@@ -88,7 +88,7 @@ export default function SubmissionsPage() {
   const [selectedHeadlinePattern, setSelectedHeadlinePattern] = useState('');
   const [selectedMechanism, setSelectedMechanism] = useState('');
   const [selectedAdCreation, setSelectedAdCreation] = useState('');
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -100,19 +100,31 @@ export default function SubmissionsPage() {
   const [headlinePatterns, setHeadlinePatterns] = useState<HeadlinePattern[]>([]);
   const [mechanisms, setMechanisms] = useState<Mechanism[]>([]);
   const [adCreationEntries, setAdCreationEntries] = useState<StoredAdCreationEntry[]>([]);
-  
+
   const [compiledSubmissions, setCompiledSubmissions] = useState<CompiledCampaignSubmission[]>([]);
   const [lastFirestoreSubmissionId, setLastFirestoreSubmissionId] = useState<string | null>(null);
 
-  const loadData = <T,>(key: string, setter: React.Dispatch<React.SetStateAction<T[]>>, name: string) => {
+  function loadData<T>(key: string, setter: React.Dispatch<React.SetStateAction<T[]>>, name: string) {
     try {
       const storedData = localStorage.getItem(key);
-      if (storedData) setter(JSON.parse(storedData));
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        // Ensure submittedAt is consistently string for local state if it's a submission type
+        if (name === "Compiled Submissions (Local)") {
+            const submissionsWithISOStrings = (parsedData as CompiledCampaignSubmission[]).map(s => ({
+                ...s,
+                submittedAt: s.submittedAt instanceof Timestamp ? s.submittedAt.toDate().toISOString() : s.submittedAt
+            }));
+            setter(submissionsWithISOStrings as T[]);
+        } else {
+            setter(parsedData);
+        }
+      }
     } catch (error) {
       console.error(`Error loading ${name} from localStorage:`, error);
       toast({ title: `Error Loading ${name}`, description: `Could not load ${name} data.`, variant: "destructive" });
     }
-  };
+  }
 
   useEffect(() => {
     loadData<CustomerAvatar>(LOCAL_STORAGE_AVATARS_KEY, setAvatars, "Avatars");
@@ -128,11 +140,15 @@ export default function SubmissionsPage() {
 
   useEffect(() => {
     if (compiledSubmissions.length > 0 || localStorage.getItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY)) {
-        localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(compiledSubmissions));
+        const submissionsToStore = compiledSubmissions.map(s => ({
+            ...s,
+            submittedAt: s.submittedAt instanceof Timestamp ? s.submittedAt.toDate().toISOString() : s.submittedAt
+        }));
+        localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(submissionsToStore));
     }
   }, [compiledSubmissions]);
 
-  const resetForm = () => {
+  function resetForm() {
     setSubmissionTitle('');
     setSubmittedBy('');
     setSelectedAvatar('');
@@ -143,15 +159,15 @@ export default function SubmissionsPage() {
     setSelectedHeadlinePattern('');
     setSelectedMechanism('');
     setSelectedAdCreation('');
-  };
+  }
 
-  const handleCreateNewClick = () => {
+  function handleCreateNewClick() {
     setEditingSubmission(null);
     resetForm();
     setShowForm(true);
-  };
+  }
 
-  const handleEditClick = (submission: CompiledCampaignSubmission) => {
+  function handleEditClick(submission: CompiledCampaignSubmission) {
     setEditingSubmission(submission);
     setSubmissionTitle(submission.submissionTitle);
     setSubmittedBy(submission.submittedBy);
@@ -165,35 +181,50 @@ export default function SubmissionsPage() {
     setSelectedAdCreation(submission.adCreationId || '');
     setLastFirestoreSubmissionId(submission.firestoreId || null);
     setShowForm(true);
-  };
+  }
 
-  const handleBackToList = () => {
+  function handleBackToList() {
     setShowForm(false);
     setEditingSubmission(null);
     resetForm();
-  };
+  }
 
-  const handleSubmit = async (e: FormEvent) => {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setIsSubmitting(true);
-    if (!editingSubmission) setLastFirestoreSubmissionId(null); 
-    
+    if (!editingSubmission) {
+        setLastFirestoreSubmissionId(null);
+    }
+
     if (!submissionTitle.trim() || !submittedBy.trim()) {
       toast({ title: "Missing Information", description: "Submission Title and Submitted By are required.", variant: "destructive" });
       setIsSubmitting(false);
       return;
     }
 
-    const findItemById = <T extends {id: string}>(items: T[], id: string): T | undefined => items.find(item => item.id === id);
-    const findAdCreationById = (items: StoredAdCreationEntry[], id: string): AdCreationFormValues | undefined => {
+    function findItemById<T extends {id: string}>(items: T[], id: string): T | undefined {
+        return items.find(item => item.id === id);
+    }
+    function findAdCreationById(items: StoredAdCreationEntry[], id: string): AdCreationFormValues | undefined {
         const found = items.find(item => item.id === id);
         return found?.data;
+    }
+
+    const getFirestoreSubmittedAt = () => {
+        if (editingSubmission?.firestoreId) {
+            if (editingSubmission.submittedAt instanceof Timestamp) {
+                return editingSubmission.submittedAt;
+            } else if (typeof editingSubmission.submittedAt === 'string') {
+                return Timestamp.fromDate(new Date(editingSubmission.submittedAt));
+            }
+        }
+        return serverTimestamp(); // For new documents or if format is unexpected
     };
 
     const firestoreCampaignData = {
       submissionTitle,
       submittedBy,
-      submittedAt: editingSubmission?.firestoreId ? (editingSubmission.submittedAt instanceof Timestamp ? editingSubmission.submittedAt : Timestamp.fromDate(new Date(editingSubmission.submittedAt as string))) : Timestamp.now(),
+      submittedAt: getFirestoreSubmittedAt(),
       customerAvatar: findItemById(avatars, selectedAvatar) || null,
       ideaTracker: findItemById(adConcepts, selectedAdConcept) || null,
       massDesire: findItemById(massDesires, selectedMassDesire) || null,
@@ -203,26 +234,38 @@ export default function SubmissionsPage() {
       mechanization: findItemById(mechanisms, selectedMechanism) || null,
       adCreation: findAdCreationById(adCreationEntries, selectedAdCreation) || null,
     };
-    
+
     try {
       let docId = editingSubmission?.firestoreId;
-      if (docId) { 
+      if (docId) {
         const docRef = doc(db, "submissions", docId);
         await updateDoc(docRef, firestoreCampaignData);
         setLastFirestoreSubmissionId(docId);
         toast({ title: 'Campaign Updated in Firestore!', description: `"${submissionTitle}" updated. Share link available.` });
-      } else { 
+      } else {
         const docRef = await addDoc(collection(db, "submissions"), firestoreCampaignData);
         docId = docRef.id;
         setLastFirestoreSubmissionId(docId);
         toast({ title: 'Campaign Submitted to Firestore!', description: `"${submissionTitle}" saved with ID: ${docId}. Share link available.` });
       }
 
+      const getLocalSubmittedAtISO = (): string => {
+          if (editingSubmission) {
+              if (editingSubmission.submittedAt instanceof Timestamp) {
+                  return editingSubmission.submittedAt.toDate().toISOString();
+              } else if (typeof editingSubmission.submittedAt === 'string') {
+                  return editingSubmission.submittedAt; // Already ISO string
+              }
+          }
+          // For new submissions, or if format is unexpected, use current client time for local state
+          return new Date().toISOString();
+      };
+
       const localCampaignData: CompiledCampaignSubmission = {
-        id: editingSubmission?.id || String(Date.now()), 
+        id: editingSubmission?.id || String(Date.now()),
         submissionTitle,
         submittedBy,
-        submittedAt: new Date().toISOString(), 
+        submittedAt: getLocalSubmittedAtISO(),
         customerAvatarId: selectedAvatar,
         ideaTrackerId: selectedAdConcept,
         massDesireId: selectedMassDesire,
@@ -232,19 +275,25 @@ export default function SubmissionsPage() {
         mechanizationId: selectedMechanism,
         adCreationId: selectedAdCreation,
         firestoreId: docId,
-        ...firestoreCampaignData, 
-        submittedAt: new Date().toISOString(), 
+        customerAvatar: firestoreCampaignData.customerAvatar,
+        ideaTracker: firestoreCampaignData.ideaTracker,
+        massDesire: firestoreCampaignData.massDesire,
+        featuresToBenefits: firestoreCampaignData.featuresToBenefits,
+        creativeRoadmap: firestoreCampaignData.creativeRoadmap,
+        headlinePattern: firestoreCampaignData.headlinePattern,
+        mechanization: firestoreCampaignData.mechanization,
+        adCreation: firestoreCampaignData.adCreation,
       };
 
-      setCompiledSubmissions(prev => 
-        editingSubmission 
+      setCompiledSubmissions(prev =>
+        editingSubmission
         ? prev.map(s => s.id === editingSubmission.id ? localCampaignData : s)
         : [localCampaignData, ...prev]
       );
 
       setShowForm(false);
       setEditingSubmission(null);
-      resetForm(); 
+      resetForm();
 
     } catch (error) {
       console.error("Error saving document to Firestore: ", error);
@@ -252,9 +301,9 @@ export default function SubmissionsPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-  
-  const handleDeleteSubmission = async (submission: CompiledCampaignSubmission) => {
+  }
+
+  async function handleDeleteSubmission(submission: CompiledCampaignSubmission) {
     const confirmed = window.confirm(`Are you sure you want to delete submission "${submission.submissionTitle}"? This will remove it from local storage and Firestore (if applicable). This cannot be undone.`);
     if (!confirmed) return;
 
@@ -270,17 +319,16 @@ export default function SubmissionsPage() {
 
     setCompiledSubmissions(prev => prev.filter(s => s.id !== submission.id));
     toast({ title: "Local Submission Deleted", description: `Submission "${submission.submissionTitle}" removed locally.` });
-    
+
     if (editingSubmission?.id === submission.id) {
       handleBackToList();
     }
     if (lastFirestoreSubmissionId === submission.firestoreId) {
       setLastFirestoreSubmissionId(null);
     }
-  };
+  }
 
-
-  const handleCopyLink = () => {
+  function handleCopyLink() {
     if (!lastFirestoreSubmissionId) return;
     const link = `${window.location.origin}/submission/${lastFirestoreSubmissionId}`;
     navigator.clipboard.writeText(link).then(() => {
@@ -289,28 +337,49 @@ export default function SubmissionsPage() {
       toast({ title: "Copy Failed", description: "Could not copy link.", variant: "destructive" });
       console.error('Failed to copy link: ', err);
     });
-  };
-  
-  const sortedCompiledSubmissions = [...compiledSubmissions].sort((a,b) => {
+  }
+
+  const sortedCompiledSubmissions = [...compiledSubmissions].sort((a, b) => {
     const dateA = a.submittedAt instanceof Timestamp ? a.submittedAt.toDate() : new Date(a.submittedAt as string);
     const dateB = b.submittedAt instanceof Timestamp ? b.submittedAt.toDate() : new Date(b.submittedAt as string);
     return dateB.getTime() - dateA.getTime();
   });
-  
-  const getSubmissionTiles = (submission: CompiledCampaignSubmission): TileInfo[] => {
-    const tiles: TileInfo[] = [];
 
-    tiles.push({ label: "Avatar", value: submission.customerAvatar?.name, icon: <UserCircle />, included: !!submission.customerAvatar });
-    tiles.push({ label: "Idea", value: submission.ideaTracker?.concept, icon: <Lightbulb />, included: !!submission.ideaTracker });
-    tiles.push({ label: "Mass Desire", value: submission.massDesire?.name, icon: <Heart />, included: !!submission.massDesire });
-    tiles.push({ label: "Benefit", value: submission.featuresToBenefits?.productFeature.substring(0,15) + (submission.featuresToBenefits?.productFeature && submission.featuresToBenefits.productFeature.length > 15 ? '...' : ''), icon: <Gift />, included: !!submission.featuresToBenefits });
-    tiles.push({ label: "Roadmap", value: submission.creativeRoadmap?.adConcept, icon: <Map />, included: !!submission.creativeRoadmap });
-    tiles.push({ label: "Headline", value: "Pattern", icon: <PenSquare />, included: !!submission.headlinePattern });
-    tiles.push({ label: "Mechanism", value: submission.mechanization?.mechanismName, icon: <Sparkles />, included: !!submission.mechanization });
-    tiles.push({ label: "Ad Creative", value: submission.adCreation?.adConcept || submission.adCreation?.batchDctNumber, icon: <Package />, included: !!submission.adCreation });
-    
-    return tiles.filter(tile => tile.included); // Only return tiles for included modules
-  };
+  function getSubmissionTiles(submission: CompiledCampaignSubmission): TileInfo[] {
+    const tiles: TileInfo[] = [];
+    let tileValue: string | undefined;
+
+    if (submission.customerAvatar) {
+      tiles.push({ label: "Avatar", value: submission.customerAvatar.name, icon: <UserCircle />, included: true });
+    }
+    if (submission.ideaTracker) {
+      tiles.push({ label: "Idea", value: submission.ideaTracker.concept, icon: <Lightbulb />, included: true });
+    }
+    if (submission.massDesire) {
+      tiles.push({ label: "Mass Desire", value: submission.massDesire.name, icon: <Heart />, included: true });
+    }
+    if (submission.featuresToBenefits) {
+      tileValue = submission.featuresToBenefits.productFeature;
+      if (tileValue && tileValue.length > 20) {
+        tileValue = tileValue.substring(0, 20) + '...';
+      }
+      tiles.push({ label: "Benefit", value: tileValue, icon: <Gift />, included: true });
+    }
+    if (submission.creativeRoadmap) {
+      tiles.push({ label: "Roadmap", value: submission.creativeRoadmap.adConcept, icon: <Map />, included: true });
+    }
+    if (submission.headlinePattern) {
+      tiles.push({ label: "Headline", value: "Pattern Included", icon: <PenSquare />, included: true });
+    }
+    if (submission.mechanization) {
+      tiles.push({ label: "Mechanism", value: submission.mechanization.mechanismName, icon: <Sparkles />, included: true });
+    }
+    if (submission.adCreation) {
+      tileValue = submission.adCreation.adConcept || submission.adCreation.batchDctNumber || "Ad Included";
+      tiles.push({ label: "Ad Creative", value: tileValue, icon: <Package />, included: true });
+    }
+    return tiles;
+  }
 
 
   return (
@@ -350,7 +419,7 @@ export default function SubmissionsPage() {
                     <Input id="submittedBy" value={submittedBy} onChange={(e) => setSubmittedBy(e.target.value)} placeholder="e.g., JD" maxLength={5} required />
                 </div>
                 </div>
-                
+
                 <Accordion type="multiple" className="w-full" defaultValue={['item-1', 'item-2']}>
                 <AccordionItem value="item-1">
                     <AccordionTrigger className="font-semibold">Core Campaign Elements</AccordionTrigger>
@@ -359,7 +428,7 @@ export default function SubmissionsPage() {
                         <div className="space-y-2"> <Label htmlFor="customer-avatar">Customer Avatar</Label> <Select value={selectedAvatar} onValueChange={setSelectedAvatar}> <SelectTrigger id="customer-avatar"><SelectValue placeholder="Select Avatar" /></SelectTrigger> <SelectContent> {avatars.length > 0 ? avatars.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>) : <SelectItem value="no-avatars" disabled>No avatars defined.</SelectItem>} </SelectContent> </Select> </div>
                         <div className="space-y-2"> <Label htmlFor="ad-concept">Ad Concept (Idea Tracker)</Label> <Select value={selectedAdConcept} onValueChange={setSelectedAdConcept}> <SelectTrigger id="ad-concept"><SelectValue placeholder="Select Ad Concept" /></SelectTrigger> <SelectContent> {adConcepts.length > 0 ? adConcepts.map(item => <SelectItem key={item.id} value={item.id}>{item.concept}</SelectItem>) : <SelectItem value="no-concepts" disabled>No concepts found.</SelectItem>} </SelectContent> </Select> </div>
                         <div className="space-y-2"> <Label htmlFor="mass-desire">Mass Desire</Label> <Select value={selectedMassDesire} onValueChange={setSelectedMassDesire}> <SelectTrigger id="mass-desire"><SelectValue placeholder="Select Mass Desire" /></SelectTrigger> <SelectContent> {massDesires.length > 0 ? massDesires.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>) : <SelectItem value="no-desires" disabled>No mass desires defined.</SelectItem>} </SelectContent> </Select> </div>
-                        <div className="space-y-2"> <Label htmlFor="feature-benefit">Feature & Benefit</Label <Select value={selectedFeatureBenefit} onValueChange={setSelectedFeatureBenefit}> <SelectTrigger id="feature-benefit"><SelectValue placeholder="Select Feature & Benefit" /></SelectTrigger> <SelectContent> {featuresBenefits.length > 0 ? featuresBenefits.map(item => <SelectItem key={item.id} value={item.id}>{`${item.productFeature.substring(0,20)}... -> ${item.directBenefit.substring(0,20)}...`}</SelectItem>) : <SelectItem value="no-fb" disabled>No feature-benefit pairs.</SelectItem>} </SelectContent> </Select> </div>
+                        <div className="space-y-2"> <Label htmlFor="feature-benefit">Feature & Benefit</Label> <Select value={selectedFeatureBenefit} onValueChange={setSelectedFeatureBenefit}> <SelectTrigger id="feature-benefit"><SelectValue placeholder="Select Feature & Benefit" /></SelectTrigger> <SelectContent> {featuresBenefits.length > 0 ? featuresBenefits.map(item => <SelectItem key={item.id} value={item.id}>{`${item.productFeature.substring(0,20)}... -> ${item.directBenefit.substring(0,20)}...`}</SelectItem>) : <SelectItem value="no-fb" disabled>No feature-benefit pairs.</SelectItem>} </SelectContent> </Select> </div>
                     </div>
                     </AccordionContent>
                 </AccordionItem>
@@ -388,7 +457,7 @@ export default function SubmissionsPage() {
                 {lastFirestoreSubmissionId && (
                 <div className="w-full p-3 border rounded-md bg-secondary/50 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:items-center justify-between">
                     <p className="text-sm text-foreground truncate">
-                    Share link: <code className="bg-muted px-1 rounded text-xs">{window.location.origin}/submission/{lastFirestoreSubmissionId}</code>
+                    Share link: <code className="bg-muted px-1 rounded text-xs">{typeof window !== 'undefined' ? window.location.origin : ''}/submission/{lastFirestoreSubmissionId}</code>
                     </p>
                     <Button variant="outline" size="sm" onClick={handleCopyLink} className="w-full sm:w-auto">
                     <Copy className="mr-2 h-3 w-3"/> Copy Link
@@ -435,11 +504,11 @@ export default function SubmissionsPage() {
                     <AccordionContent className="space-y-2 text-sm">
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 p-2 md:p-4 overflow-y-auto max-h-[220px] rounded-md bg-muted/30">
                             {tiles.map((tile, index) => (
-                                <SubmissionDetailTile 
-                                    key={index} 
-                                    label={tile.label} 
-                                    value={tile.value} 
-                                    icon={tile.icon} 
+                                <SubmissionDetailTile
+                                    key={index}
+                                    label={tile.label}
+                                    value={tile.value}
+                                    icon={tile.icon}
                                     included={tile.included}
                                 />
                             ))}
@@ -470,4 +539,3 @@ export default function SubmissionsPage() {
     </div>
   );
 }
-
