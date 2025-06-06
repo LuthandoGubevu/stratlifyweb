@@ -282,19 +282,19 @@ export default function ProfilePage() {
           <CardTitle className="font-headline text-xl">Application Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center justify-between">
+            <div className="flex-grow">
               <Label htmlFor="notifications" className="font-medium">Email Notifications</Label>
               <p className="text-sm text-muted-foreground">Receive updates and alerts via email. (Currently UI only)</p>
             </div>
-            <Switch id="notifications" checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
+            <Switch id="notifications" checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} className="self-start sm:self-center mt-1 sm:mt-0" />
           </div>
-           <div className="flex items-center justify-between">
-            <div>
+           <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center justify-between">
+            <div className="flex-grow">
               <Label htmlFor="dark-mode" className="font-medium">Dark Mode</Label>
               <p className="text-sm text-muted-foreground">Toggle dark theme for the application.</p>
             </div>
-            <Switch id="dark-mode" checked={darkMode} onCheckedChange={handleDarkModeToggle} />
+            <Switch id="dark-mode" checked={darkMode} onCheckedChange={handleDarkModeToggle} className="self-start sm:self-center mt-1 sm:mt-0" />
           </div>
           <Button variant="outline" onClick={() => toast({title: "Settings Mockup", description: "Dark mode preference is saved automatically. Other general app settings could be saved here."})}>Save Other Settings</Button>
         </CardContent>

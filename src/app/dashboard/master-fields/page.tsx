@@ -210,9 +210,9 @@ export default function MasterFieldsPage() {
                     <Input id="avatarName" value={currentAvatarName} onChange={(e) => setCurrentAvatarName(e.target.value)} placeholder="e.g., Tech Savvy Millenial" required />
                     </div>
                 </div>
-                <CardFooter className="p-0 pt-4 flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={handleBackToList}>Cancel</Button>
-                    <Button type="submit">{editingEntry ? 'Save Changes' : 'Add Entry'}</Button>
+                <CardFooter className="p-0 pt-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:justify-end sm:space-x-2">
+                    <Button type="button" variant="outline" onClick={handleBackToList} className="w-full sm:w-auto">Cancel</Button>
+                    <Button type="submit" className="w-full sm:w-auto">{editingEntry ? 'Save Changes' : 'Add Entry'}</Button>
                 </CardFooter>
             </form>
         ) : (
@@ -292,3 +292,4 @@ export default function MasterFieldsPage() {
     </Card>
   );
 }
+

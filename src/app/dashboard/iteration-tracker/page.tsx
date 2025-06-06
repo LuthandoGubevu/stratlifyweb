@@ -222,22 +222,22 @@ export default function IterationTrackerPage() {
               Fill in the details for this ad iteration.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-y-4 py-4">
             {[
               { id: 'batchDctNumber', label: 'Batch / DCT #', required: true },
               { id: 'adConcept', label: 'Ad Concept', required: true },
               { id: 'linkToAdset', label: 'Link to Adset' },
               ...levels.map(level => ({id: level, label: `Level ${level.charAt(level.length-1)} Test`}))
             ].map(field => (
-              <div className="grid grid-cols-4 items-center gap-4" key={field.id}>
-                <Label htmlFor={field.id} className="text-right">
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-x-4 gap-y-2" key={field.id}>
+                <Label htmlFor={field.id} className="text-left sm:text-right">
                   {field.label}{field.required && <span className="text-destructive">*</span>}
                 </Label>
                 <Input
                   id={field.id}
                   value={currentEntryData[field.id as keyof typeof currentEntryData] || ''}
                   onChange={(e) => setCurrentEntryData(prev => ({ ...prev, [field.id]: e.target.value }))}
-                  className="col-span-3"
+                  className="sm:col-span-3"
                 />
               </div>
             ))}
@@ -255,3 +255,4 @@ export default function IterationTrackerPage() {
     </Card>
   );
 }
+

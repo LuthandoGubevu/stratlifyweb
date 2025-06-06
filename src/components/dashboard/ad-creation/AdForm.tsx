@@ -139,11 +139,11 @@ export default function AdForm({
               </AccordionItem>
             </Accordion>
 
-            <CardFooter className="flex justify-end space-x-4 p-0 pt-6">
-              <Button type="button" variant="outline" onClick={() => onSaveDraft(form.getValues())} disabled={isSubmitting}>
+            <CardFooter className="flex flex-col space-y-2 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-4 p-0 pt-6">
+              <Button type="button" variant="outline" onClick={() => onSaveDraft(form.getValues())} disabled={isSubmitting} className="w-full sm:w-auto">
                 {isEditing ? 'Update Draft' : 'Save Draft'}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                 {isSubmitting ? (isEditing ? 'Updating Ad...' : 'Submitting Ad...') : (isEditing ? 'Update & Submit Ad' : 'Submit Ad')}
               </Button>
             </CardFooter>
@@ -153,3 +153,4 @@ export default function AdForm({
     </Card>
   );
 }
+

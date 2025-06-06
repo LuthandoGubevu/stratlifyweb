@@ -254,9 +254,9 @@ export default function CustomerAvatarsPage() {
                     <Label htmlFor="tags">Tags (Comma-separated)</Label>
                     <Input id="tags" value={currentTags} onChange={(e) => setCurrentTags(e.target.value)} placeholder="e.g., Millenial, Environment, Online Shopper" />
                 </div>
-                <CardFooter className="p-0 pt-4 flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={handleBackToList}>Cancel</Button>
-                    <Button type="submit">{editingAvatar ? 'Save Changes' : 'Add Avatar'}</Button>
+                <CardFooter className="p-0 pt-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:justify-end sm:space-x-2">
+                    <Button type="button" variant="outline" onClick={handleBackToList} className="w-full sm:w-auto">Cancel</Button>
+                    <Button type="submit" className="w-full sm:w-auto">{editingAvatar ? 'Save Changes' : 'Add Avatar'}</Button>
                 </CardFooter>
             </form>
         ) : (
@@ -301,3 +301,4 @@ export default function CustomerAvatarsPage() {
     </Card>
   );
 }
+

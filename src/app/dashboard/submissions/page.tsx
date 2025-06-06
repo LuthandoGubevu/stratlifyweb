@@ -371,19 +371,19 @@ export default function SubmissionsPage() {
 
             </CardContent>
             <CardFooter className="flex-col items-start space-y-4">
-                <div className="flex w-full justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={handleBackToList}>Cancel</Button>
-                    <Button type="submit" className="" disabled={isSubmitting}>
+                <div className="flex flex-col items-stretch space-y-2 sm:flex-row sm:space-y-0 sm:items-center w-full justify-end sm:space-x-2">
+                    <Button type="button" variant="outline" onClick={handleBackToList} className="w-full sm:w-auto">Cancel</Button>
+                    <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
                         <Send className="mr-2 h-4 w-4" />
                         {isSubmitting ? 'Submitting...' : (editingSubmission ? 'Update Submission' : 'Compile & Save Submission')}
                     </Button>
                 </div>
                 {lastFirestoreSubmissionId && (
-                <div className="w-full p-3 border rounded-md bg-secondary/50 flex items-center justify-between">
+                <div className="w-full p-3 border rounded-md bg-secondary/50 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:items-center justify-between">
                     <p className="text-sm text-foreground truncate">
                     Share link: <code className="bg-muted px-1 rounded text-xs">{window.location.origin}/submission/{lastFirestoreSubmissionId}</code>
                     </p>
-                    <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                    <Button variant="outline" size="sm" onClick={handleCopyLink} className="w-full sm:w-auto">
                     <Copy className="mr-2 h-3 w-3"/> Copy Link
                     </Button>
                 </div>
@@ -404,15 +404,15 @@ export default function SubmissionsPage() {
                 <Accordion type="single" collapsible className="w-full">
                 {sortedCompiledSubmissions.map(submission => (
                     <AccordionItem value={submission.id} key={submission.id}>
-                    <AccordionTrigger className="font-semibold hover:no-underline">
-                        <div className="flex justify-between items-center w-full">
-                        <span className="truncate pr-2">{submission.submissionTitle}</span>
-                        <div className="flex items-center flex-shrink-0">
-                            <span className="text-xs text-muted-foreground mr-2">
+                    <AccordionTrigger className="font-semibold hover:no-underline text-left">
+                       <div className="flex flex-col sm:flex-row justify-between sm:items-center w-full">
+                        <span className="truncate pr-2 font-medium">{submission.submissionTitle}</span>
+                        <div className="flex flex-col items-start sm:items-center sm:flex-row flex-shrink-0 mt-1 sm:mt-0 sm:ml-2">
+                            <span className="text-xs text-muted-foreground sm:mr-2">
                                 By: {submission.submittedBy} on {new Date(submission.submittedAt instanceof Timestamp ? submission.submittedAt.toDate() : submission.submittedAt as string).toLocaleDateString()}
                                 {submission.firestoreId && <span className="ml-2 text-green-600 font-medium">(DB)</span>}
                             </span>
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity mt-1 sm:mt-0">
                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleEditClick(submission);}}>
                                     <Edit className="h-4 w-4"/>
                                 </Button>
@@ -453,3 +453,4 @@ export default function SubmissionsPage() {
     </div>
   );
 }
+

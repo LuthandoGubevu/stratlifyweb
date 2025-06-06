@@ -187,9 +187,9 @@ export default function FeaturesToBenefitsPage() {
                     <Label htmlFor="benefitOfBenefit">Benefit of the Benefit (Ultimate Transformation - Optional)</Label>
                     <Textarea id="benefitOfBenefit" value={currentBenefitOfBenefit} onChange={(e) => setCurrentBenefitOfBenefit(e.target.value)} placeholder="e.g., Feel organized and in control of your digital life" rows={2}/>
                 </div>
-                <CardFooter className="p-0 pt-4 flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={handleBackToList}>Cancel</Button>
-                    <Button type="submit">{editingPair ? 'Save Changes' : 'Add Conversion'}</Button>
+                <CardFooter className="p-0 pt-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:justify-end sm:space-x-2">
+                    <Button type="button" variant="outline" onClick={handleBackToList} className="w-full sm:w-auto">Cancel</Button>
+                    <Button type="submit" className="w-full sm:w-auto">{editingPair ? 'Save Changes' : 'Add Conversion'}</Button>
                 </CardFooter>
             </form>
         ) : (
@@ -254,3 +254,4 @@ export default function FeaturesToBenefitsPage() {
     </Card>
   );
 }
+
