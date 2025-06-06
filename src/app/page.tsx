@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Lightbulb, Target, TrendingUp, Users, Edit3 } from 'lucide-react';
+import { Briefcase, ClipboardList, Repeat, PenSquare, Target, TrendingUp } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -14,10 +14,10 @@ export default function LandingPage() {
         <section className="pt-32 pb-16 md:pt-40 md:pb-24 text-center bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-white mb-6">
-              Elevate Your Ad Strategy with Stratlify
+              Master Your Marketing: Plan, Build, and Optimize Ad Campaigns with Precision
             </h1>
             <p className="text-lg sm:text-xl text-gray-200 max-w-3xl mx-auto mb-10">
-              Track, test, and optimize your creative ad campaigns using deep copywriting frameworks, iteration tracking, and structured ad building.
+              Stratlify provides the structure and tools to transform your ad concepts into high-performing campaigns. Centralize your strategy, build with proven frameworks, and iterate towards success.
             </p>
             <div className="space-x-4">
               <Button size="lg" asChild className="font-semibold">
@@ -36,19 +36,17 @@ export default function LandingPage() {
             <h2 className="text-3xl font-headline font-semibold text-center text-white mb-12">
               Why Stratlify?
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
-                { icon: <Target className="w-10 h-10 text-accent" />, title: "Structured Ad Building", description: "Create compelling ads with proven frameworks and guided inputs." },
-                { icon: <TrendingUp className="w-10 h-10 text-accent" />, title: "Iteration Tracking", description: "Monitor and analyze ad performance across multiple iterations effortlessly." },
-                { icon: <Edit3 className="w-10 h-10 text-accent" />, title: "Copywriter-Centric UI", description: "A clean, minimalistic interface designed for creative professionals." },
-                { icon: <Lightbulb className="w-10 h-10 text-accent" />, title: "AI-Powered Insights", description: "Leverage AI to generate unique mechanisms and ad copy variations." },
-                { icon: <Users className="w-10 h-10 text-accent" />, title: "Team Collaboration", description: "Streamline your team's workflow with centralized campaign management." },
-                { icon: <Image src="https://placehold.co/100x100.png" alt="Feature placeholder" width={100} height={100} className="rounded-lg object-cover w-10 h-10" data-ai-hint="strategy tools" />, title: "Comprehensive Toolset", description: "From idea tracking to headline patterns, all tools in one place." },
+                { icon: <Briefcase className="w-10 h-10 text-accent" />, title: "Strategic Campaign Hub", description: "Define customer avatars, capture ad concepts, and map out your entire campaign lifecycle in one centralized hub." },
+                { icon: <ClipboardList className="w-10 h-10 text-accent" />, title: "Guided Ad Construction", description: "Build high-impact ads with structured inputs for hooks, headlines, body copy, CTAs, and landing page details." },
+                { icon: <Repeat className="w-10 h-10 text-accent" />, title: "Iterative Performance Tracking", description: "Track ad versions, document learnings, and systematically improve your campaigns based on performance data." },
+                { icon: <PenSquare className="w-10 h-10 text-accent" />, title: "Deep Copywriting Toolkit", description: "Define core desires, convert features to benefits, leverage headline patterns, and articulate unique product mechanisms." },
               ].map((feature, index) => (
-                <div key={index} className="bg-card p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow duration-300">
+                <div key={index} className="bg-card p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow duration-300 flex flex-col">
                   <div className="flex justify-center mb-4">{feature.icon}</div>
                   <h3 className="text-xl font-headline font-semibold text-primary mb-2">{feature.title}</h3>
-                  <p className="text-foreground/70">{feature.description}</p>
+                  <p className="text-foreground/70 flex-grow">{feature.description}</p>
                 </div>
               ))}
             </div>
