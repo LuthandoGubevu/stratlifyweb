@@ -13,7 +13,7 @@ export default function LandingPage() {
         {/* Hero Section */}
         <section className="pt-32 pb-16 md:pt-40 md:pb-24 text-center bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-white mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-white mb-6">
               Master Your Marketing: Plan, Build, and Optimize Ad Campaigns with Precision
             </h1>
             <p className="text-lg sm:text-xl text-gray-200 max-w-3xl mx-auto mb-10">
