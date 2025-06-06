@@ -56,15 +56,15 @@ export default function LandingPage() {
         </section>
         
         {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-primary text-primary-foreground">
+        <section className="py-16 md:py-24 bg-transparent text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-headline font-semibold mb-6">
               Ready to Revolutionize Your Ad Campaigns?
             </h2>
-            <p className="text-lg opacity-80 max-w-2xl mx-auto mb-8">
+            <p className="text-lg text-gray-200 max-w-2xl mx-auto mb-8">
               Join Stratlify today and start building high-performing ads that convert.
             </p>
-            <Button size="lg" variant="secondary" asChild className="font-semibold text-primary hover:bg-secondary/90">
+            <Button size="lg" asChild className="font-semibold">
               <Link href="/register">Sign Up Now</Link>
             </Button>
           </div>
