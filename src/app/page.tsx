@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import Link from 'next/link';
@@ -6,23 +7,23 @@ import { Lightbulb, Target, TrendingUp, Users, Edit3 } from 'lucide-react';
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-secondary/30">
+    <div className="flex flex-col min-h-screen bg-sidebar">
       <Navbar />
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="pt-32 pb-16 md:pt-40 md:pb-24 text-center bg-background">
+        <section className="pt-32 pb-16 md:pt-40 md:pb-24 text-center bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-primary mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-white mb-6">
               Elevate Your Ad Strategy with Stratlify
             </h1>
-            <p className="text-lg sm:text-xl text-foreground/80 max-w-3xl mx-auto mb-10">
+            <p className="text-lg sm:text-xl text-gray-200 max-w-3xl mx-auto mb-10">
               Track, test, and optimize your creative ad campaigns using deep copywriting frameworks, iteration tracking, and structured ad building.
             </p>
             <div className="space-x-4">
               <Button size="lg" asChild className="font-semibold">
                 <Link href="/register">Get Started Free</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="font-semibold">
+              <Button size="lg" variant="outline" asChild className="font-semibold text-white border-white hover:bg-white hover:text-sidebar">
                 <Link href="/login">Login to Dashboard</Link>
               </Button>
             </div>
@@ -30,9 +31,9 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section className="py-16 md:py-24 bg-secondary/50">
+        <section className="py-16 md:py-24 bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-headline font-semibold text-center text-primary mb-12">
+            <h2 className="text-3xl font-headline font-semibold text-center text-white mb-12">
               Why Stratlify?
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -70,8 +71,8 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="py-8 bg-background border-t border-border">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-foreground/60">
+      <footer className="py-8 bg-transparent border-t border-gray-700">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-300">
           <p>&copy; {new Date().getFullYear()} Stratlify. All rights reserved.</p>
           <p className="text-sm">A platform for modern advertising teams.</p>
         </div>
