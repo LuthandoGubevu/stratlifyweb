@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation'; 
+import { usePathname } from 'next/navigation'; // useRouter removed as window.location is used
 import {
   LayoutDashboard,
   Lightbulb,
@@ -16,7 +16,6 @@ import {
   Repeat,
   Sparkles,
   Send,
-  // BarChart, // Removed Analytics icon
   Settings,
   Loader2,
   LogOut 
@@ -62,10 +61,9 @@ const navItems = [
     ],
   },
   {
-    label: 'Settings', // Simplified group label as Analytics is removed
+    label: 'Settings', 
     isGroup: true,
     items: [
-      // { href: '/dashboard/analytics', label: 'Analytics', icon: BarChart }, // Removed Analytics link
       { href: '/dashboard/profile', label: 'Profile & Settings', icon: Settings },
     ],
   }
@@ -74,11 +72,12 @@ const navItems = [
 export function SidebarNav() {
   const pathname = usePathname();
   const { loading: authLoading, signOut, user } = useAuth(); 
-  const router = useRouter(); 
+  // const router = useRouter(); // No longer needed for this specific logout
 
   const handleSignOut = async () => {
     await signOut();
-    router.push('/'); 
+    // Force a full page navigation to the landing page to ensure clean state
+    window.location.assign('/'); 
   };
 
   const renderNavItem = (item: any, index: number) => (
