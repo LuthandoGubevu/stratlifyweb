@@ -14,8 +14,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Send, ListChecks, Eye, Copy, PlusCircle, ArrowLeft, Trash2, Edit } from 'lucide-react';
+import { Send, ListChecks, Eye, Copy, PlusCircle, ArrowLeft, Trash2, Edit, UserCircle, Lightbulb, Heart, Gift, Map, PenSquare, Sparkles, Package } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import SubmissionDetailTile from '@/components/dashboard/submissions/SubmissionDetailTile';
+
 
 import type { CustomerAvatar } from '../customer-avatars/page';
 import type { Idea } from '../idea-tracker/page';
@@ -24,11 +26,11 @@ import type { FeatureBenefitPair } from '../features-to-benefits/page';
 import type { RoadmapEntry } from '../creative-roadmap/page';
 import type { HeadlinePattern } from '../headline-patterns/page';
 import type { Mechanism } from '../mechanization/page';
-import type { AdCreationFormValues, StoredAdCreationEntry } from '../ad-creation/page'; // Ensure StoredAdCreationEntry is exported
+import type { AdCreationFormValues, StoredAdCreationEntry } from '../ad-creation/page'; 
 
 // Firestore imports
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore'; // Added updateDoc, doc, deleteDoc
+import { collection, addDoc, Timestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore'; 
 
 const LOCAL_STORAGE_AVATARS_KEY = 'customerAvatarsEntries';
 const LOCAL_STORAGE_IDEAS_KEY = 'ideaTrackerEntries';
@@ -53,9 +55,6 @@ export interface CompiledCampaignSubmission {
   headlinePatternId?: string;
   mechanizationId?: string;
   adCreationId?: string;
-  // Store full objects for Firestore to simplify viewer, or just IDs for local and resolve on view?
-  // For now, let's store full objects in Firestore version, and IDs for local.
-  // Firestore version will have full nested objects. Local version is lighter.
   customerAvatar?: CustomerAvatar | null;
   ideaTracker?: Idea | null;
   massDesire?: MassDesire | null;
@@ -66,6 +65,14 @@ export interface CompiledCampaignSubmission {
   adCreation?: AdCreationFormValues | null;
   firestoreId?: string; 
 }
+
+interface TileInfo {
+    label: string;
+    value?: string;
+    icon: React.ReactNode;
+    included: boolean;
+}
+
 
 export default function SubmissionsPage() {
   const [showForm, setShowForm] = useState(false);
@@ -169,7 +176,7 @@ export default function SubmissionsPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    if (!editingSubmission) setLastFirestoreSubmissionId(null); // Reset for new submissions
+    if (!editingSubmission) setLastFirestoreSubmissionId(null); 
     
     if (!submissionTitle.trim() || !submittedBy.trim()) {
       toast({ title: "Missing Information", description: "Submission Title and Submitted By are required.", variant: "destructive" });
@@ -199,19 +206,18 @@ export default function SubmissionsPage() {
     
     try {
       let docId = editingSubmission?.firestoreId;
-      if (docId) { // Update existing Firestore document
+      if (docId) { 
         const docRef = doc(db, "submissions", docId);
         await updateDoc(docRef, firestoreCampaignData);
         setLastFirestoreSubmissionId(docId);
         toast({ title: 'Campaign Updated in Firestore!', description: `"${submissionTitle}" updated. Share link available.` });
-      } else { // Add new Firestore document
+      } else { 
         const docRef = await addDoc(collection(db, "submissions"), firestoreCampaignData);
         docId = docRef.id;
         setLastFirestoreSubmissionId(docId);
         toast({ title: 'Campaign Submitted to Firestore!', description: `"${submissionTitle}" saved with ID: ${docId}. Share link available.` });
       }
 
-      // Update local storage list
       const localCampaignData: CompiledCampaignSubmission = {
         id: editingSubmission?.id || String(Date.now()), 
         submissionTitle,
@@ -226,11 +232,8 @@ export default function SubmissionsPage() {
         mechanizationId: selectedMechanism,
         adCreationId: selectedAdCreation,
         firestoreId: docId,
-        // For local display convenience, we can choose to store full objects too or just IDs.
-        // Or, for consistency with Firestore, we can store the objects directly.
-        // For simplicity, mirroring the firestore data structure (with full objects for what was selected) in local display
         ...firestoreCampaignData, 
-        submittedAt: new Date().toISOString(), // ensure local submittedAt is string
+        submittedAt: new Date().toISOString(), 
       };
 
       setCompiledSubmissions(prev => 
@@ -241,7 +244,7 @@ export default function SubmissionsPage() {
 
       setShowForm(false);
       setEditingSubmission(null);
-      resetForm(); // Also resets submissionTitle and submittedBy
+      resetForm(); 
 
     } catch (error) {
       console.error("Error saving document to Firestore: ", error);
@@ -255,7 +258,6 @@ export default function SubmissionsPage() {
     const confirmed = window.confirm(`Are you sure you want to delete submission "${submission.submissionTitle}"? This will remove it from local storage and Firestore (if applicable). This cannot be undone.`);
     if (!confirmed) return;
 
-    // Delete from Firestore if firestoreId exists
     if (submission.firestoreId) {
       try {
         await deleteDoc(doc(db, "submissions", submission.firestoreId));
@@ -266,7 +268,6 @@ export default function SubmissionsPage() {
       }
     }
 
-    // Delete from local state and localStorage
     setCompiledSubmissions(prev => prev.filter(s => s.id !== submission.id));
     toast({ title: "Local Submission Deleted", description: `Submission "${submission.submissionTitle}" removed locally.` });
     
@@ -295,6 +296,21 @@ export default function SubmissionsPage() {
     const dateB = b.submittedAt instanceof Timestamp ? b.submittedAt.toDate() : new Date(b.submittedAt as string);
     return dateB.getTime() - dateA.getTime();
   });
+  
+  const getSubmissionTiles = (submission: CompiledCampaignSubmission): TileInfo[] => {
+    const tiles: TileInfo[] = [];
+
+    tiles.push({ label: "Avatar", value: submission.customerAvatar?.name, icon: <UserCircle />, included: !!submission.customerAvatar });
+    tiles.push({ label: "Idea", value: submission.ideaTracker?.concept, icon: <Lightbulb />, included: !!submission.ideaTracker });
+    tiles.push({ label: "Mass Desire", value: submission.massDesire?.name, icon: <Heart />, included: !!submission.massDesire });
+    tiles.push({ label: "Benefit", value: submission.featuresToBenefits?.productFeature.substring(0,15) + (submission.featuresToBenefits?.productFeature && submission.featuresToBenefits.productFeature.length > 15 ? '...' : ''), icon: <Gift />, included: !!submission.featuresToBenefits });
+    tiles.push({ label: "Roadmap", value: submission.creativeRoadmap?.adConcept, icon: <Map />, included: !!submission.creativeRoadmap });
+    tiles.push({ label: "Headline", value: "Pattern", icon: <PenSquare />, included: !!submission.headlinePattern });
+    tiles.push({ label: "Mechanism", value: submission.mechanization?.mechanismName, icon: <Sparkles />, included: !!submission.mechanization });
+    tiles.push({ label: "Ad Creative", value: submission.adCreation?.adConcept || submission.adCreation?.batchDctNumber, icon: <Package />, included: !!submission.adCreation });
+    
+    return tiles.filter(tile => tile.included); // Only return tiles for included modules
+  };
 
 
   return (
@@ -340,14 +356,10 @@ export default function SubmissionsPage() {
                     <AccordionTrigger className="font-semibold">Core Campaign Elements</AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Customer Avatar */}
                         <div className="space-y-2"> <Label htmlFor="customer-avatar">Customer Avatar</Label> <Select value={selectedAvatar} onValueChange={setSelectedAvatar}> <SelectTrigger id="customer-avatar"><SelectValue placeholder="Select Avatar" /></SelectTrigger> <SelectContent> {avatars.length > 0 ? avatars.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>) : <SelectItem value="no-avatars" disabled>No avatars defined.</SelectItem>} </SelectContent> </Select> </div>
-                        {/* Ad Concept (Idea Tracker) */}
                         <div className="space-y-2"> <Label htmlFor="ad-concept">Ad Concept (Idea Tracker)</Label> <Select value={selectedAdConcept} onValueChange={setSelectedAdConcept}> <SelectTrigger id="ad-concept"><SelectValue placeholder="Select Ad Concept" /></SelectTrigger> <SelectContent> {adConcepts.length > 0 ? adConcepts.map(item => <SelectItem key={item.id} value={item.id}>{item.concept}</SelectItem>) : <SelectItem value="no-concepts" disabled>No concepts found.</SelectItem>} </SelectContent> </Select> </div>
-                        {/* Mass Desire */}
                         <div className="space-y-2"> <Label htmlFor="mass-desire">Mass Desire</Label> <Select value={selectedMassDesire} onValueChange={setSelectedMassDesire}> <SelectTrigger id="mass-desire"><SelectValue placeholder="Select Mass Desire" /></SelectTrigger> <SelectContent> {massDesires.length > 0 ? massDesires.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>) : <SelectItem value="no-desires" disabled>No mass desires defined.</SelectItem>} </SelectContent> </Select> </div>
-                        {/* Feature & Benefit */}
-                        <div className="space-y-2"> <Label htmlFor="feature-benefit">Feature & Benefit</Label> <Select value={selectedFeatureBenefit} onValueChange={setSelectedFeatureBenefit}> <SelectTrigger id="feature-benefit"><SelectValue placeholder="Select Feature & Benefit" /></SelectTrigger> <SelectContent> {featuresBenefits.length > 0 ? featuresBenefits.map(item => <SelectItem key={item.id} value={item.id}>{`${item.productFeature.substring(0,20)}... -> ${item.directBenefit.substring(0,20)}...`}</SelectItem>) : <SelectItem value="no-fb" disabled>No feature-benefit pairs.</SelectItem>} </SelectContent> </Select> </div>
+                        <div className="space-y-2"> <Label htmlFor="feature-benefit">Feature & Benefit</Label <Select value={selectedFeatureBenefit} onValueChange={setSelectedFeatureBenefit}> <SelectTrigger id="feature-benefit"><SelectValue placeholder="Select Feature & Benefit" /></SelectTrigger> <SelectContent> {featuresBenefits.length > 0 ? featuresBenefits.map(item => <SelectItem key={item.id} value={item.id}>{`${item.productFeature.substring(0,20)}... -> ${item.directBenefit.substring(0,20)}...`}</SelectItem>) : <SelectItem value="no-fb" disabled>No feature-benefit pairs.</SelectItem>} </SelectContent> </Select> </div>
                     </div>
                     </AccordionContent>
                 </AccordionItem>
@@ -355,13 +367,9 @@ export default function SubmissionsPage() {
                     <AccordionTrigger className="font-semibold">Strategy & Execution Elements</AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Creative Roadmap Entry */}
                         <div className="space-y-2"> <Label htmlFor="creative-roadmap">Creative Roadmap Entry</Label> <Select value={selectedRoadmapEntry} onValueChange={setSelectedRoadmapEntry}> <SelectTrigger id="creative-roadmap"><SelectValue placeholder="Select Roadmap Entry" /></SelectTrigger> <SelectContent> {roadmapEntries.length > 0 ? roadmapEntries.map(item => <SelectItem key={item.id} value={item.id}>{item.dctNumber} - {item.adConcept}</SelectItem>) : <SelectItem value="no-roadmap" disabled>No roadmap entries.</SelectItem>} </SelectContent> </Select> </div>
-                        {/* Headline Pattern */}
                         <div className="space-y-2"> <Label htmlFor="headline-pattern">Headline Pattern</Label> <Select value={selectedHeadlinePattern} onValueChange={setSelectedHeadlinePattern}> <SelectTrigger id="headline-pattern"><SelectValue placeholder="Select Headline Pattern" /></SelectTrigger> <SelectContent> {headlinePatterns.length > 0 ? headlinePatterns.map(item => <SelectItem key={item.id} value={item.id}>{item.pattern.substring(0,50)}...</SelectItem>) : <SelectItem value="no-headlines" disabled>No headline patterns.</SelectItem>} </SelectContent> </Select> </div>
-                        {/* Product Mechanism */}
                         <div className="space-y-2"> <Label htmlFor="mechanization">Product Mechanism</Label> <Select value={selectedMechanism} onValueChange={setSelectedMechanism}> <SelectTrigger id="mechanization"><SelectValue placeholder="Select Mechanism" /></SelectTrigger> <SelectContent> {mechanisms.length > 0 ? mechanisms.map(item => <SelectItem key={item.id} value={item.id}>{item.mechanismName} ({item.product})</SelectItem>) : <SelectItem value="no-mechanisms" disabled>No mechanisms defined.</SelectItem>} </SelectContent> </Select> </div>
-                        {/* Ad Creation Draft */}
                         <div className="space-y-2"> <Label htmlFor="ad-creation-entry">Ad Creation Draft</Label> <Select value={selectedAdCreation} onValueChange={setSelectedAdCreation}> <SelectTrigger id="ad-creation-entry"><SelectValue placeholder="Select Ad Draft" /></SelectTrigger> <SelectContent> {adCreationEntries.length > 0 ? adCreationEntries.map(item => <SelectItem key={item.id} value={item.id}>{(item.data.adConcept || item.data.batchDctNumber || "Untitled Ad Draft").substring(0,40)}... (Saved: {new Date(item.createdAt).toLocaleDateString()})</SelectItem>) : <SelectItem value="no-ad-drafts" disabled>No ad drafts saved.</SelectItem>} </SelectContent> </Select> </div>
                     </div>
                     </AccordionContent>
@@ -396,12 +404,14 @@ export default function SubmissionsPage() {
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="font-headline text-xl flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary"/>Campaign Submissions Log</CardTitle>
-            <CardDescription>This is a list of submissions saved in your browser. Click to view details or edit. (Firestore saved entries are also listed here).</CardDescription>
+            <CardDescription>This is a list of submissions saved in your browser. Expand to view details or edit. (Firestore saved entries are also listed here).</CardDescription>
           </CardHeader>
           <CardContent>
             {sortedCompiledSubmissions.length > 0 ? (
                 <Accordion type="single" collapsible className="w-full">
-                {sortedCompiledSubmissions.map(submission => (
+                {sortedCompiledSubmissions.map(submission => {
+                  const tiles = getSubmissionTiles(submission);
+                  return (
                     <AccordionItem value={submission.id} key={submission.id}>
                     <AccordionTrigger className="font-semibold hover:no-underline text-left">
                        <div className="flex flex-col sm:flex-row justify-between sm:items-center w-full gap-2 group">
@@ -411,7 +421,7 @@ export default function SubmissionsPage() {
                                 By: {submission.submittedBy} on {new Date(submission.submittedAt instanceof Timestamp ? submission.submittedAt.toDate() : submission.submittedAt as string).toLocaleDateString()}
                                 {submission.firestoreId && <span className="ml-2 text-green-600 font-medium">(DB)</span>}
                             </span>
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity mt-1 sm:mt-0">
+                            <div className="flex items-center space-x-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity mt-1 sm:mt-0">
                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleEditClick(submission);}}>
                                     <Edit className="h-4 w-4"/>
                                 </Button>
@@ -423,13 +433,20 @@ export default function SubmissionsPage() {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-2 text-sm">
-                        <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs">
-                        {JSON.stringify(submission, (key, value) => 
-                            key === 'submittedAt' && typeof value === 'object' && value && 'seconds' in value ? new Date(value.seconds * 1000).toISOString() : value, 
-                        2)}
-                        </pre>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 p-2 md:p-4 overflow-y-auto max-h-[220px] rounded-md bg-muted/30">
+                            {tiles.map((tile, index) => (
+                                <SubmissionDetailTile 
+                                    key={index} 
+                                    label={tile.label} 
+                                    value={tile.value} 
+                                    icon={tile.icon} 
+                                    included={tile.included}
+                                />
+                            ))}
+                             {!tiles.length && <p className="col-span-full text-center text-muted-foreground py-4">No modules selected for this submission.</p>}
+                        </div>
                         {submission.firestoreId && (
-                            <Button variant="link" size="sm" asChild className="px-0">
+                            <Button variant="link" size="sm" asChild className="px-0 mt-2">
                                 <a href={`/submission/${submission.firestoreId}`} target="_blank" rel="noopener noreferrer">
                                     View Full Submission Page <Eye className="ml-1 h-4 w-4"/>
                                 </a>
@@ -437,7 +454,8 @@ export default function SubmissionsPage() {
                         )}
                     </AccordionContent>
                     </AccordionItem>
-                ))}
+                  );
+                })}
                 </Accordion>
             ) : (
                 <div className="text-center py-12">
