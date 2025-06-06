@@ -212,13 +212,19 @@ export default function SubmissionsPage() {
 
     const getFirestoreSubmittedAt = () => {
         if (editingSubmission?.firestoreId) {
+            // If editing and submittedAt exists, use it. If it's a string, convert to Timestamp.
             if (editingSubmission.submittedAt instanceof Timestamp) {
                 return editingSubmission.submittedAt;
             } else if (typeof editingSubmission.submittedAt === 'string') {
-                return Timestamp.fromDate(new Date(editingSubmission.submittedAt));
+                const date = new Date(editingSubmission.submittedAt);
+                if (!isNaN(date.getTime())) { // Check if date is valid
+                    return Timestamp.fromDate(date);
+                }
             }
+            // Fallback for existing items if conversion failed or format was unexpected
+            return serverTimestamp(); 
         }
-        return serverTimestamp(); // For new documents or if format is unexpected
+        return serverTimestamp(); // For new documents
     };
 
     const firestoreCampaignData = {
@@ -239,7 +245,7 @@ export default function SubmissionsPage() {
       let docId = editingSubmission?.firestoreId;
       if (docId) {
         const docRef = doc(db, "submissions", docId);
-        await updateDoc(docRef, firestoreCampaignData);
+        await updateDoc(docRef, firestoreCampaignData); // Note: submittedAt will update to server time if it was serverTimestamp()
         setLastFirestoreSubmissionId(docId);
         toast({ title: 'Campaign Updated in Firestore!', description: `"${submissionTitle}" updated. Share link available.` });
       } else {
@@ -248,18 +254,19 @@ export default function SubmissionsPage() {
         setLastFirestoreSubmissionId(docId);
         toast({ title: 'Campaign Submitted to Firestore!', description: `"${submissionTitle}" saved with ID: ${docId}. Share link available.` });
       }
-
+      
       const getLocalSubmittedAtISO = (): string => {
-          if (editingSubmission) {
-              if (editingSubmission.submittedAt instanceof Timestamp) {
-                  return editingSubmission.submittedAt.toDate().toISOString();
-              } else if (typeof editingSubmission.submittedAt === 'string') {
-                  return editingSubmission.submittedAt; // Already ISO string
-              }
+          if (firestoreCampaignData.submittedAt instanceof Timestamp) {
+              return firestoreCampaignData.submittedAt.toDate().toISOString();
           }
-          // For new submissions, or if format is unexpected, use current client time for local state
+          // If serverTimestamp was used, we won't know the exact time until Firestore confirms it.
+          // For local optimistic update, use client's current time for NEW entries, or existing for EDITED.
+          if (editingSubmission && editingSubmission.submittedAt) {
+            return editingSubmission.submittedAt instanceof Timestamp ? editingSubmission.submittedAt.toDate().toISOString() : editingSubmission.submittedAt;
+          }
           return new Date().toISOString();
       };
+
 
       const localCampaignData: CompiledCampaignSubmission = {
         id: editingSubmission?.id || String(Date.now()),
@@ -275,6 +282,7 @@ export default function SubmissionsPage() {
         mechanizationId: selectedMechanism,
         adCreationId: selectedAdCreation,
         firestoreId: docId,
+        // Populate with the actual data used for Firestore
         customerAvatar: firestoreCampaignData.customerAvatar,
         ideaTracker: firestoreCampaignData.ideaTracker,
         massDesire: firestoreCampaignData.massDesire,
@@ -348,35 +356,38 @@ export default function SubmissionsPage() {
   function getSubmissionTiles(submission: CompiledCampaignSubmission): TileInfo[] {
     const tiles: TileInfo[] = [];
     let tileValue: string | undefined;
-
+  
     if (submission.customerAvatar) {
-      tiles.push({ label: "Avatar", value: submission.customerAvatar.name, icon: <UserCircle />, included: true });
+      tiles.push({ label: "Avatar", value: submission.customerAvatar.name, icon: <UserCircle className="h-5 w-5"/>, included: true });
     }
     if (submission.ideaTracker) {
-      tiles.push({ label: "Idea", value: submission.ideaTracker.concept, icon: <Lightbulb />, included: true });
+      tiles.push({ label: "Idea", value: submission.ideaTracker.concept, icon: <Lightbulb className="h-5 w-5"/>, included: true });
     }
     if (submission.massDesire) {
-      tiles.push({ label: "Mass Desire", value: submission.massDesire.name, icon: <Heart />, included: true });
+      tiles.push({ label: "Mass Desire", value: submission.massDesire.name, icon: <Heart className="h-5 w-5"/>, included: true });
     }
     if (submission.featuresToBenefits) {
       tileValue = submission.featuresToBenefits.productFeature;
-      if (tileValue && tileValue.length > 20) {
-        tileValue = tileValue.substring(0, 20) + '...';
+      if (tileValue && tileValue.length > 15) { // Adjusted for typical tile width
+        tileValue = tileValue.substring(0, 15) + '...';
       }
-      tiles.push({ label: "Benefit", value: tileValue, icon: <Gift />, included: true });
+      tiles.push({ label: "Benefit", value: tileValue, icon: <Gift className="h-5 w-5"/>, included: true });
     }
     if (submission.creativeRoadmap) {
-      tiles.push({ label: "Roadmap", value: submission.creativeRoadmap.adConcept, icon: <Map />, included: true });
+      tiles.push({ label: "Roadmap", value: submission.creativeRoadmap.adConcept, icon: <Map className="h-5 w-5"/>, included: true });
     }
     if (submission.headlinePattern) {
-      tiles.push({ label: "Headline", value: "Pattern Included", icon: <PenSquare />, included: true });
+      tiles.push({ label: "Headline", value: "Pattern", icon: <PenSquare className="h-5 w-5"/>, included: true });
     }
     if (submission.mechanization) {
-      tiles.push({ label: "Mechanism", value: submission.mechanization.mechanismName, icon: <Sparkles />, included: true });
+      tiles.push({ label: "Mechanism", value: submission.mechanization.mechanismName, icon: <Sparkles className="h-5 w-5"/>, included: true });
     }
     if (submission.adCreation) {
-      tileValue = submission.adCreation.adConcept || submission.adCreation.batchDctNumber || "Ad Included";
-      tiles.push({ label: "Ad Creative", value: tileValue, icon: <Package />, included: true });
+      tileValue = submission.adCreation.adConcept || submission.adCreation.batchDctNumber || "Ad Creative";
+      if (tileValue && tileValue.length > 15) {
+         tileValue = tileValue.substring(0, 15) + '...';
+      }
+      tiles.push({ label: "Ad Creative", value: tileValue, icon: <Package className="h-5 w-5"/>, included: true });
     }
     return tiles;
   }
@@ -515,11 +526,29 @@ export default function SubmissionsPage() {
                              {!tiles.length && <p className="col-span-full text-center text-muted-foreground py-4">No modules selected for this submission.</p>}
                         </div>
                         {submission.firestoreId && (
-                            <Button variant="link" size="sm" asChild className="px-0 mt-2">
-                                <a href={`/submission/${submission.firestoreId}`} target="_blank" rel="noopener noreferrer">
-                                    View Full Submission Page <Eye className="ml-1 h-4 w-4"/>
-                                </a>
-                            </Button>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <Button variant="link" size="sm" asChild className="px-0">
+                                    <a href={`/submission/${submission.firestoreId}`} target="_blank" rel="noopener noreferrer">
+                                        View Full Submission Page <Eye className="ml-1 h-4 w-4"/>
+                                    </a>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent accordion from toggling
+                                        const link = `${window.location.origin}/submission/${submission.firestoreId}`;
+                                        navigator.clipboard.writeText(link).then(() => {
+                                            toast({ title: "Link Copied!", description: "Shareable link copied to clipboard." });
+                                        }).catch(err => {
+                                            toast({ title: "Copy Failed", description: "Could not copy link.", variant: "destructive" });
+                                            console.error('Failed to copy link: ', err);
+                                        });
+                                    }}
+                                >
+                                    <Copy className="mr-1.5 h-3.5 w-3.5" /> Copy Link
+                                </Button>
+                            </div>
                         )}
                     </AccordionContent>
                     </AccordionItem>
