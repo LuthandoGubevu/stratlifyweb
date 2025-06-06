@@ -227,7 +227,6 @@ export default function SubmissionsPage() {
         adCreationId: selectedAdCreation,
         firestoreId: docId,
         // For local display convenience, we can choose to store full objects too or just IDs.
-        // Let's stick to IDs primarily for local, and resolve them if needed for display later.
         // Or, for consistency with Firestore, we can store the objects directly.
         // For simplicity, mirroring the firestore data structure (with full objects for what was selected) in local display
         ...firestoreCampaignData, 
@@ -302,8 +301,8 @@ export default function SubmissionsPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-            <div className="flex justify-between items-center">
-                <div>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <div className="flex-grow">
                     <CardTitle className="font-headline text-2xl">
                         {showForm ? (editingSubmission ? 'Edit Campaign Submission' : 'New Campaign Submission') : 'Campaign Submissions'}
                     </CardTitle>
@@ -312,11 +311,11 @@ export default function SubmissionsPage() {
                     </CardDescription>
                 </div>
                 {!showForm ? (
-                    <Button onClick={handleCreateNewClick}>
+                    <Button onClick={handleCreateNewClick} className="w-full sm:w-auto">
                         <PlusCircle className="mr-2 h-4 w-4" /> Create New Submission
                     </Button>
                 ) : (
-                    <Button variant="outline" onClick={handleBackToList}>
+                    <Button variant="outline" onClick={handleBackToList} className="w-full sm:w-auto">
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Submission List
                     </Button>
                 )}
@@ -370,7 +369,7 @@ export default function SubmissionsPage() {
                 </Accordion>
 
             </CardContent>
-            <CardFooter className="flex-col items-start space-y-4">
+            <CardFooter className="flex flex-col items-start space-y-4">
                 <div className="flex flex-col items-stretch space-y-2 sm:flex-row sm:space-y-0 sm:items-center w-full justify-end sm:space-x-2">
                     <Button type="button" variant="outline" onClick={handleBackToList} className="w-full sm:w-auto">Cancel</Button>
                     <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
@@ -405,14 +404,14 @@ export default function SubmissionsPage() {
                 {sortedCompiledSubmissions.map(submission => (
                     <AccordionItem value={submission.id} key={submission.id}>
                     <AccordionTrigger className="font-semibold hover:no-underline text-left">
-                       <div className="flex flex-col sm:flex-row justify-between sm:items-center w-full">
-                        <span className="truncate pr-2 font-medium">{submission.submissionTitle}</span>
-                        <div className="flex flex-col items-start sm:items-center sm:flex-row flex-shrink-0 mt-1 sm:mt-0 sm:ml-2">
-                            <span className="text-xs text-muted-foreground sm:mr-2">
+                       <div className="flex flex-col sm:flex-row justify-between sm:items-center w-full gap-2 group">
+                        <span className="truncate pr-2 font-medium flex-grow">{submission.submissionTitle}</span>
+                        <div className="flex flex-col items-start sm:items-center sm:flex-row flex-shrink-0 gap-x-2">
+                            <span className="text-xs text-muted-foreground">
                                 By: {submission.submittedBy} on {new Date(submission.submittedAt instanceof Timestamp ? submission.submittedAt.toDate() : submission.submittedAt as string).toLocaleDateString()}
                                 {submission.firestoreId && <span className="ml-2 text-green-600 font-medium">(DB)</span>}
                             </span>
-                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity mt-1 sm:mt-0">
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity mt-1 sm:mt-0">
                                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleEditClick(submission);}}>
                                     <Edit className="h-4 w-4"/>
                                 </Button>
