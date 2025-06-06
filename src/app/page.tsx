@@ -23,7 +23,7 @@ export default function LandingPage() {
               <Button size="lg" asChild className="font-semibold">
                 <Link href="/register">Get Started Free</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="font-semibold text-white border-white hover:bg-white hover:text-sidebar">
+              <Button size="lg" variant="outline" asChild className="font-semibold bg-transparent text-white border-white hover:bg-white hover:text-sidebar">
                 <Link href="/login">Login to Dashboard</Link>
               </Button>
             </div>
