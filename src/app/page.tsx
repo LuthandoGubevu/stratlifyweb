@@ -75,16 +75,6 @@ export default function ApexDevLandingPage() {
                   <div className="mb-4">{service.icon}</div>
                   <h3 className="text-xl font-headline font-semibold text-white mb-3">{service.name}</h3>
                   <p className="text-gray-400 text-sm flex-grow">{service.description}</p>
-                   <div className="mt-4">
-                    <Image 
-                      src={`https://placehold.co/300x200.png`} 
-                      alt={service.name} 
-                      width={300} 
-                      height={200} 
-                      className="rounded-md object-cover aspect-video"
-                      data-ai-hint={service.imageHint}
-                    />
-                  </div>
                 </div>
               ))}
             </div>
