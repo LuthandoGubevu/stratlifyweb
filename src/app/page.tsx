@@ -23,7 +23,7 @@ export default function ApexDevLandingPage() {
         <section className="pt-32 pb-16 md:pt-48 md:pb-24 text-center bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-white mb-6">
-              Unlock Precision Ad Campaigns with Stratlify
+              Try the beta version of stratlify by ApexDev
             </h1>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-10">
               Your all-in-one platform to strategize, build, and perfect ad creatives that deliver results. Step inside and transform your marketing.
