@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/select';
 
 
-interface Idea {
+export interface Idea {
   id: string;
   concept: string;
   description: string;

@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { PlusCircle, Trash2, Edit, Filter, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface MasterFieldEntry {
+export interface MasterFieldEntry {
   id: string;
   addedBy: string; 
   status: 'Pending' | 'Approved' | 'Rejected' | 'Live' | 'Paused';

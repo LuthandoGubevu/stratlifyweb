@@ -25,7 +25,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PlusCircle, Trash2, Edit, Repeat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface IterationEntry {
+export interface IterationEntry {
   id: string;
   batchDctNumber: string;
   adConcept: string;

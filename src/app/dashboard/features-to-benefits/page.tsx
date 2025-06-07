@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { PlusCircle, Trash2, Search, ChevronsRight, Edit, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface FeatureBenefitPair {
+export interface FeatureBenefitPair {
   id: string;
   productFeature: string;
   directBenefit: string; 
