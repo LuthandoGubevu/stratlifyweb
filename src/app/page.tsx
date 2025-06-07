@@ -1,78 +1,135 @@
 
 import { Button } from '@/components/ui/button';
-import { Navbar } from '@/components/Navbar';
+import { ApexdevNavbar } from '@/components/ApexdevNavbar';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Briefcase, ClipboardList, Repeat, PenSquare, Target, TrendingUp } from 'lucide-react';
+import { Palette, Code, MonitorSmartphone, Film, Share2, Award, Phone, Mail } from 'lucide-react';
 
-export default function LandingPage() {
+const services = [
+  { name: "Graphic Design", icon: <Palette className="w-10 h-10 text-cyan-500" />, description: "Crafting visually stunning designs that tell your brand's story and captivate your audience.", imageHint: "graphic design abstract" },
+  { name: "Web Development", icon: <Code className="w-10 h-10 text-cyan-500" />, description: "Building robust, scalable, and high-performance websites and web applications tailored to your needs.", imageHint: "code screen" },
+  { name: "Web Design", icon: <MonitorSmartphone className="w-10 h-10 text-cyan-500" />, description: "Creating intuitive, user-friendly, and responsive web interfaces that drive engagement.", imageHint: "website mockup" },
+  { name: "Multimedia Production", icon: <Film className="w-10 h-10 text-cyan-500" />, description: "Producing engaging video content, animations, and interactive media to elevate your message.", imageHint: "video editing" },
+  { name: "Social Media Strategy", icon: <Share2 className="w-10 h-10 text-cyan-500" />, description: "Developing data-driven social media campaigns to grow your online presence and connect with customers.", imageHint: "social media icons" },
+  { name: "Branding & Identity", icon: <Award className="w-10 h-10 text-cyan-500" />, description: "Building memorable brand identities, from logo design to complete brand guidelines.", imageHint: "brand moodboard" },
+];
+
+export default function ApexDevLandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-sidebar">
-      <Navbar />
+    <div className="flex flex-col min-h-screen bg-[#1a1a1a] text-gray-200 font-body">
+      <ApexdevNavbar />
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="pt-32 pb-16 md:pt-40 md:pb-24 text-center bg-transparent">
+        <section className="pt-32 pb-16 md:pt-48 md:pb-24 text-center bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-white mb-6">
-              Master Your Marketing: Plan, Build, and Optimize Ad Campaigns with Precision
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-white mb-6">
+              Bring Your Vision to Life with ApexDev
             </h1>
-            <p className="text-lg sm:text-xl text-gray-200 max-w-3xl mx-auto mb-10">
-              Stratlify provides the structure and tools to transform your ad concepts into high-performing campaigns. Centralize your strategy, build with proven frameworks, and iterate towards success.
+            <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-10">
+              We craft stunning digital experiences and powerful web solutions. Explore our services or test drive Stratlify, our innovative in-house platform.
             </p>
-            <div className="space-x-4">
-              <Button size="lg" asChild className="font-semibold">
-                <Link href="/register">Get Started Free</Link>
+            <div className="space-y-4 sm:space-y-0 sm:space-x-4">
+              <Button size="lg" asChild className="font-semibold bg-cyan-500 hover:bg-cyan-600 text-black w-full sm:w-auto">
+                <Link href="#services-section">Our Services</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="font-semibold bg-transparent text-white border-white hover:bg-white hover:text-sidebar">
-                <Link href="/login">Login to Dashboard</Link>
+              <Button size="lg" variant="outline" asChild className="font-semibold bg-transparent text-white border-cyan-500 hover:bg-cyan-500 hover:text-black hover:border-cyan-500 w-full sm:w-auto">
+                <Link href="/stratlify-platform">Explore Stratlify</Link>
               </Button>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-16 md:py-24 bg-transparent">
+        {/* Who We Are Section */}
+        <section id="who-we-are" className="py-16 md:py-24 bg-[#111111]">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-3xl font-headline font-semibold text-white mb-6">Who We Are</h2>
+                <p className="text-lg text-gray-300 mb-4">
+                  ApexDev Studios is a passionate digital agency based in East London, South Africa. We specialize in creating impactful digital solutions that help businesses thrive.
+                </p>
+                <p className="text-lg text-gray-300">
+                  Our mission is to blend creativity with cutting-edge technology to deliver outstanding results and build long-lasting partnerships with our clients.
+                </p>
+              </div>
+              <div>
+                <Image 
+                  src="https://placehold.co/600x400.png" 
+                  alt="ApexDev Studios Team or Office" 
+                  width={600} 
+                  height={400} 
+                  className="rounded-lg shadow-xl mx-auto"
+                  data-ai-hint="team office" 
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Services Section */}
+        <section id="services-section" className="py-16 md:py-24 bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-headline font-semibold text-center text-white mb-12">
-              Why Stratlify?
+              Our Services
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                { icon: <Briefcase className="w-10 h-10 text-accent" />, title: "Strategic Campaign Hub", description: "Define customer avatars, capture ad concepts, and map out your entire campaign lifecycle in one centralized hub." },
-                { icon: <ClipboardList className="w-10 h-10 text-accent" />, title: "Guided Ad Construction", description: "Build high-impact ads with structured inputs for hooks, headlines, body copy, CTAs, and landing page details." },
-                { icon: <Repeat className="w-10 h-10 text-accent" />, title: "Iterative Performance Tracking", description: "Track ad versions, document learnings, and systematically improve your campaigns based on performance data." },
-                { icon: <PenSquare className="w-10 h-10 text-accent" />, title: "Deep Copywriting Toolkit", description: "Define core desires, convert features to benefits, leverage headline patterns, and articulate unique product mechanisms." },
-              ].map((feature, index) => (
-                <div key={index} className="bg-card p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow duration-300 flex flex-col">
-                  <div className="flex justify-center mb-4">{feature.icon}</div>
-                  <h3 className="text-xl font-headline font-semibold text-primary mb-2">{feature.title}</h3>
-                  <p className="text-foreground/70 flex-grow">{feature.description}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {services.map((service) => (
+                <div key={service.name} className="bg-[#222222] p-6 rounded-lg shadow-lg text-center hover:shadow-cyan-500/30 transition-shadow duration-300 flex flex-col items-center">
+                  <div className="mb-4">{service.icon}</div>
+                  <h3 className="text-xl font-headline font-semibold text-white mb-3">{service.name}</h3>
+                  <p className="text-gray-400 text-sm flex-grow">{service.description}</p>
+                   <div className="mt-4">
+                    <Image 
+                      src={`https://placehold.co/300x200.png`} 
+                      alt={service.name} 
+                      width={300} 
+                      height={200} 
+                      className="rounded-md object-cover aspect-video"
+                      data-ai-hint={service.imageHint}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </section>
         
-        {/* CTA Section */}
-        <section className="py-16 md:py-24 bg-transparent text-white">
+        {/* Contact Section */}
+        <section id="contact-section" className="py-16 md:py-24 bg-[#111111]">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-headline font-semibold mb-6">
-              Ready to Revolutionize Your Ad Campaigns?
+            <h2 className="text-3xl font-headline font-semibold text-white mb-6">
+              Get in Touch
             </h2>
-            <p className="text-lg text-gray-200 max-w-2xl mx-auto mb-8">
-              Join Stratlify today and start building high-performing ads that convert.
+            <p className="text-lg text-gray-300 max-w-xl mx-auto mb-8">
+              Ready to start your project or have a question? We'd love to hear from you.
             </p>
-            <Button size="lg" asChild className="font-semibold">
-              <Link href="/register">Sign Up Now</Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8 text-lg">
+              <a href="tel:0793258818" className="flex items-center text-cyan-400 hover:text-cyan-300 transition-colors">
+                <Phone className="mr-2 h-5 w-5" /> 079 325 8818
+              </a>
+              <a href="mailto:lgubevu@gmail.com" className="flex items-center text-cyan-400 hover:text-cyan-300 transition-colors">
+                <Mail className="mr-2 h-5 w-5" /> lgubevu@gmail.com
+              </a>
+            </div>
+            <p className="text-gray-400 mt-8 text-sm">Location: East London, South Africa</p>
+            {/* Placeholder for contact form or map */}
+            <div className="mt-8">
+              <Button size="lg" asChild className="font-semibold bg-cyan-500 hover:bg-cyan-600 text-black">
+                <a href="mailto:lgubevu@gmail.com">Send Us An Email</a>
+              </Button>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="py-8 bg-transparent border-t border-gray-700">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-300">
-          <p>&copy; {new Date().getFullYear()} Stratlify. All rights reserved.</p>
-          <p className="text-sm">A platform for modern advertising teams.</p>
+      <footer className="py-8 bg-black border-t border-gray-700">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
+           <Link href="/" className="flex items-center justify-center gap-2 text-xl font-headline font-semibold text-white mb-2">
+            {/* <Package className="h-6 w-6 text-cyan-500" /> */}
+            ApexDev Studios
+          </Link>
+          <p className="text-sm">&copy; {new Date().getFullYear()} ApexDev Studios. All rights reserved.</p>
+          <p className="text-xs mt-1">Designed in East London, South Africa.</p>
         </div>
       </footer>
     </div>
