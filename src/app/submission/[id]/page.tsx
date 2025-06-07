@@ -18,9 +18,9 @@ import { AlertCircle, MessageSquare, Send, UserCircle, Edit3 } from 'lucide-reac
 import Image from 'next/image';
 
 import type { CustomerAvatar } from '@/app/dashboard/customer-avatars/page';
-import type { Idea } from '@/app/dashboard/idea-tracker/page';
-import type { MassDesire } from '@/app/dashboard/mass-desires/page';
-import type { FeatureBenefitPair } from '@/app/dashboard/features-to-benefits/page';
+import type Idea from '@/app/dashboard/idea-tracker/page';
+import type MassDesire from '@/app/dashboard/mass-desires/page';
+import type FeatureBenefitPair from '@/app/dashboard/features-to-benefits/page';
 import type { RoadmapEntry } from '@/app/dashboard/creative-roadmap/page';
 import type { HeadlinePattern } from '@/app/dashboard/headline-patterns/page';
 import type { Mechanism } from '@/app/dashboard/mechanization/page';
@@ -313,3 +313,5 @@ export default function SubmissionViewerPage() {
     </div>
   );
 }
+
+    

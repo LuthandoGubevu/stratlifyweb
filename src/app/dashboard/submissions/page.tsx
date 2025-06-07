@@ -19,9 +19,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import SubmissionDetailTile from '@/components/dashboard/submissions/SubmissionDetailTile';
 
 import type { CustomerAvatar } from '../customer-avatars/page';
-import type { Idea } from '../idea-tracker/page';
-import type { MassDesire } from '../mass-desires/page';
-import type { FeatureBenefitPair } from '../features-to-benefits/page';
+import type Idea from '../idea-tracker/page';
+import type MassDesire from '../mass-desires/page';
+import type FeatureBenefitPair from '../features-to-benefits/page';
 import type { RoadmapEntry } from '../creative-roadmap/page';
 import type { HeadlinePattern } from '../headline-patterns/page';
 import type { Mechanism } from '../mechanization/page';
@@ -568,3 +568,5 @@ export default function SubmissionsPage() {
     </div>
   );
 }
+
+    
