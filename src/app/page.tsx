@@ -23,10 +23,10 @@ export default function ApexDevLandingPage() {
         <section className="pt-32 pb-16 md:pt-48 md:pb-24 text-center bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-white mb-6">
-              Elevate Your Ad Campaigns with Stratlify
+              Unlock Precision Ad Campaigns with Stratlify
             </h1>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-10">
-              Our innovative in-house platform empowers you to plan, build, and optimize high-performing ad campaigns with clarity and control.
+              Your all-in-one platform to strategize, build, and perfect ad creatives that deliver results. Step inside and transform your marketing.
             </p>
             <div className="flex justify-center">
               <Button size="lg" asChild className="font-semibold bg-cyan-500 hover:bg-cyan-600 text-black w-full sm:w-auto">
