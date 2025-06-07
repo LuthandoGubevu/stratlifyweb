@@ -39,7 +39,7 @@ export default function ApexDevLandingPage() {
         {/* Who We Are Section */}
         <section id="who-we-are" className="py-16 md:py-24 bg-[#111111]">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="grid md:grid-cols-1 gap-12 items-center text-center md:text-left"> {/* Changed to md:grid-cols-1 and text-center */}
               <div>
                 <h2 className="text-3xl font-headline font-semibold text-white mb-6">Who We Are</h2>
                 <p className="text-lg text-gray-300 mb-4">
@@ -49,16 +49,7 @@ export default function ApexDevLandingPage() {
                   Our mission is to blend creativity with cutting-edge technology to deliver outstanding results and build long-lasting partnerships with our clients.
                 </p>
               </div>
-              <div>
-                <Image 
-                  src="https://placehold.co/600x400.png" 
-                  alt="ApexDev Studios Team or Office" 
-                  width={600} 
-                  height={400} 
-                  className="rounded-lg shadow-xl mx-auto"
-                  data-ai-hint="team office" 
-                />
-              </div>
+              {/* Image removed from here */}
             </div>
           </div>
         </section>
