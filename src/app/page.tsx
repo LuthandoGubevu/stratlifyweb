@@ -22,17 +22,14 @@ export default function ApexDevLandingPage() {
         {/* Hero Section */}
         <section className="pt-32 pb-16 md:pt-48 md:pb-24 text-center bg-transparent">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-headline font-bold text-white mb-6">
-              Bring Your Vision to Life with ApexDev
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-headline font-bold text-white mb-6">
+              Elevate Your Ad Campaigns with Stratlify
             </h1>
             <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-10">
-              We craft stunning digital experiences and powerful web solutions. Explore our services or test drive Stratlify, our innovative in-house platform.
+              Our innovative in-house platform empowers you to plan, build, and optimize high-performing ad campaigns with clarity and control.
             </p>
-            <div className="space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex justify-center">
               <Button size="lg" asChild className="font-semibold bg-cyan-500 hover:bg-cyan-600 text-black w-full sm:w-auto">
-                <Link href="#services-section">Our Services</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild className="font-semibold bg-transparent text-white border-cyan-500 hover:bg-cyan-500 hover:text-black hover:border-cyan-500 w-full sm:w-auto">
                 <Link href="/stratlify-platform">Explore Stratlify</Link>
               </Button>
             </div>
