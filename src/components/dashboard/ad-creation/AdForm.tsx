@@ -34,7 +34,7 @@ interface AdFormProps {
   onSaveDraft: (data: AdCreationFormValues) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
-  adCreationSchema: z.ZodObject<any, any, any>; // Adjust based on actual schema structure if more specific type needed
+  adCreationSchema: z.Schema<AdCreationFormValues>; // Changed from z.ZodObject<any, any, any>
   hookPatternOptions: typeof HookPatternOptionsType;
 }
 
