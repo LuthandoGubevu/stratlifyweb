@@ -274,13 +274,13 @@ export default function MechanizationPage() {
                 {sortedPastMechanisms.map(mech => (
                   <AccordionItem value={mech.id} key={mech.id}>
                     <AccordionTrigger className="font-semibold hover:no-underline">
-                        <div className="flex justify-between items-center w-full">
+                        <div className="flex justify-between items-center w-full group"> {/* Added group class here for parent hover */}
                             <span>{mech.mechanismName} <span className="text-sm text-muted-foreground ml-2">({mech.product})</span></span>
                              <div className="flex items-center space-x-1 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleEditClick(mech);}}>
+                                <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleEditClick(mech);}}>
                                     <Edit className="h-4 w-4"/>
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleDeleteMechanism(mech.id);}}>
+                                <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleDeleteMechanism(mech.id);}}>
                                     <Trash2 className="h-4 w-4 text-destructive"/>
                                 </Button>
                             </div>
