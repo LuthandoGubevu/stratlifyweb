@@ -278,10 +278,10 @@ export default function MechanizationPage() {
                             <span>{mech.mechanismName} <span className="text-sm text-muted-foreground ml-2">({mech.product})</span></span>
                              <div className="flex items-center space-x-1 pr-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleEditClick(mech);}}>
-                                    <Edit className="h-4 w-4"/>
+                                    <span><Edit className="h-4 w-4"/></span>
                                 </Button>
                                 <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleDeleteMechanism(mech.id);}}>
-                                    <Trash2 className="h-4 w-4 text-destructive"/>
+                                    <span><Trash2 className="h-4 w-4 text-destructive"/></span>
                                 </Button>
                             </div>
                         </div>

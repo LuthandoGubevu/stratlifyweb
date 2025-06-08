@@ -503,10 +503,10 @@ export default function SubmissionsPage() {
                             </span>
                             <div className="flex items-center space-x-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity mt-1 sm:mt-0">
                                 <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleEditClick(submission);}}>
-                                    <Edit className="h-4 w-4"/>
+                                    <span><Edit className="h-4 w-4"/></span>
                                 </Button>
                                 <Button asChild variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => {e.stopPropagation(); handleDeleteSubmission(submission);}}>
-                                    <Trash2 className="h-4 w-4 text-destructive"/>
+                                    <span><Trash2 className="h-4 w-4 text-destructive"/></span>
                                 </Button>
                             </div>
                         </div>
