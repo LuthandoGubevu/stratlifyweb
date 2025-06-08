@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Send, ListChecks, Eye, Copy, PlusCircle, ArrowLeft, Trash2, Edit, UserCircle, Lightbulb, Heart, Gift, Map, PenSquare, Sparkles, Package } from 'lucide-react';
+import { Send, ListChecks, Eye, Copy, PlusCircle, ArrowLeft, Trash2, Edit, UserCircle, Lightbulb, Heart, Gift, Map, PenSquare, Sparkles, Package, Loader2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import SubmissionDetailTile from '@/components/dashboard/submissions/SubmissionDetailTile';
 
@@ -29,7 +29,20 @@ import type { AdCreationFormValues, StoredAdCreationEntry } from '../ad-creation
 
 // Firestore imports
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  Timestamp,
+  updateDoc,
+  doc,
+  deleteDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  getDocs
+} from 'firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 const LOCAL_STORAGE_AVATARS_KEY = 'customerAvatarsEntries';
 const LOCAL_STORAGE_IDEAS_KEY = 'ideaTrackerEntries';
@@ -42,10 +55,10 @@ const LOCAL_STORAGE_AD_CREATION_KEY = 'adCreationEntries';
 const LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY = 'compiledCampaignSubmissions';
 
 export interface CompiledCampaignSubmission {
-  id: string;
+  id: string; // This will be the local/UI ID. Firestore ID is separate.
   submissionTitle: string;
   submittedBy: string;
-  submittedAt: string | Timestamp; // Store as ISO string in local state/storage, Timestamp in Firestore
+  submittedAt: string; // Always store as ISO string in local state/storage
   customerAvatarId?: string;
   ideaTrackerId?: string;
   massDesireId?: string;
@@ -75,6 +88,7 @@ interface TileInfo {
 
 
 export default function SubmissionsPage() {
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingSubmission, setEditingSubmission] = useState<CompiledCampaignSubmission | null>(null);
 
@@ -90,6 +104,7 @@ export default function SubmissionsPage() {
   const [selectedAdCreation, setSelectedAdCreation] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(true);
   const { toast } = useToast();
 
   const [avatars, setAvatars] = useState<CustomerAvatar[]>([]);
@@ -109,16 +124,7 @@ export default function SubmissionsPage() {
       const storedData = localStorage.getItem(key);
       if (storedData) {
         const parsedData = JSON.parse(storedData);
-        // Ensure submittedAt is consistently string for local state if it's a submission type
-        if (name === "Compiled Submissions (Local)") {
-            const submissionsWithISOStrings = (parsedData as CompiledCampaignSubmission[]).map(s => ({
-                ...s,
-                submittedAt: s.submittedAt instanceof Timestamp ? s.submittedAt.toDate().toISOString() : s.submittedAt
-            }));
-            setter(submissionsWithISOStrings as T[]);
-        } else {
-            setter(parsedData);
-        }
+        setter(parsedData);
       }
     } catch (error) {
       console.error(`Error loading ${name} from localStorage:`, error);
@@ -127,6 +133,9 @@ export default function SubmissionsPage() {
   }
 
   useEffect(() => {
+    console.log("Submissions Page Auth User UID:", user?.uid || "No user");
+
+    // Load non-submission data (dropdowns etc.) from localStorage
     loadData<CustomerAvatar>(LOCAL_STORAGE_AVATARS_KEY, setAvatars, "Avatars");
     loadData<Idea>(LOCAL_STORAGE_IDEAS_KEY, setAdConcepts, "Ad Concepts");
     loadData<MassDesire>(LOCAL_STORAGE_DESIRES_KEY, setMassDesires, "Mass Desires");
@@ -135,18 +144,50 @@ export default function SubmissionsPage() {
     loadData<HeadlinePattern>(LOCAL_STORAGE_HEADLINES_KEY, setHeadlinePatterns, "Headline Patterns");
     loadData<Mechanism>(LOCAL_STORAGE_MECHANISMS_KEY, setMechanisms, "Mechanisms");
     loadData<StoredAdCreationEntry>(LOCAL_STORAGE_AD_CREATION_KEY, setAdCreationEntries, "Ad Creation Entries");
-    loadData<CompiledCampaignSubmission>(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, setCompiledSubmissions, "Compiled Submissions (Local)");
-  }, [toast]);
+
+    // Fetch submissions from Firestore
+    const fetchSubmissions = async () => {
+      setIsLoadingSubmissions(true);
+      try {
+        // Note: Add .where("userId", "==", user.uid) if submissions are user-specific
+        const q = query(collection(db, "submissions"), orderBy("submittedAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        const firestoreSubmissions: CompiledCampaignSubmission[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          firestoreSubmissions.push({
+            ...data,
+            id: doc.id, // Use Firestore doc ID as the primary 'id' for items fetched from Firestore
+            firestoreId: doc.id,
+            submittedAt: (data.submittedAt as Timestamp).toDate().toISOString(), // Convert Timestamp to ISO string
+          } as CompiledCampaignSubmission);
+        });
+        setCompiledSubmissions(firestoreSubmissions);
+        localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(firestoreSubmissions));
+        console.log(`Fetched ${firestoreSubmissions.length} submissions from Firestore.`);
+      } catch (error) {
+        console.error("Error fetching submissions from Firestore:", error);
+        toast({ title: "Error Fetching Submissions", description: "Could not load submissions from the database. Displaying local data if available.", variant: "destructive" });
+        // Fallback to local storage if Firestore fetch fails
+        const localSubmissionsRaw = localStorage.getItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY);
+        if (localSubmissionsRaw) {
+          setCompiledSubmissions(JSON.parse(localSubmissionsRaw));
+        }
+      } finally {
+        setIsLoadingSubmissions(false);
+      }
+    };
+
+    fetchSubmissions();
+  }, [toast, user]); // Added user dependency if you implement user-specific queries
 
   useEffect(() => {
-    if (compiledSubmissions.length > 0 || localStorage.getItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY)) {
-        const submissionsToStore = compiledSubmissions.map(s => ({
-            ...s,
-            submittedAt: s.submittedAt instanceof Timestamp ? s.submittedAt.toDate().toISOString() : s.submittedAt
-        }));
-        localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(submissionsToStore));
+    // This effect now primarily serves to update localStorage if compiledSubmissions is changed by other means (e.g., after a new submission)
+    // The initial load from Firestore also updates localStorage.
+    if (compiledSubmissions.length > 0 || !isLoadingSubmissions) { // Only save if not loading and there's data or loading finished
+        localStorage.setItem(LOCAL_STORAGE_COMPILED_SUBMISSIONS_KEY, JSON.stringify(compiledSubmissions));
     }
-  }, [compiledSubmissions]);
+  }, [compiledSubmissions, isLoadingSubmissions]);
 
   function resetForm() {
     setSubmissionTitle('');
@@ -192,9 +233,7 @@ export default function SubmissionsPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setIsSubmitting(true);
-    if (!editingSubmission) {
-        setLastFirestoreSubmissionId(null);
-    }
+    console.log("Submitting form. User UID:", user?.uid || "No user");
 
     if (!submissionTitle.trim() || !submittedBy.trim()) {
       toast({ title: "Missing Information", description: "Submission Title and Submitted By are required.", variant: "destructive" });
@@ -209,28 +248,12 @@ export default function SubmissionsPage() {
         const found = items.find(item => item.id === id);
         return found?.data;
     }
-
-    const getFirestoreSubmittedAt = () => {
-        if (editingSubmission?.firestoreId) {
-            // If editing and submittedAt exists, use it. If it's a string, convert to Timestamp.
-            if (editingSubmission.submittedAt instanceof Timestamp) {
-                return editingSubmission.submittedAt;
-            } else if (typeof editingSubmission.submittedAt === 'string') {
-                const date = new Date(editingSubmission.submittedAt);
-                if (!isNaN(date.getTime())) { // Check if date is valid
-                    return Timestamp.fromDate(date);
-                }
-            }
-            // Fallback for existing items if conversion failed or format was unexpected
-            return serverTimestamp(); 
-        }
-        return serverTimestamp(); // For new documents
-    };
-
-    const firestoreCampaignData = {
+    
+    // Prepare data for Firestore
+    const submissionDataForFirestore: any = {
       submissionTitle,
       submittedBy,
-      submittedAt: getFirestoreSubmittedAt(),
+      // userId: user?.uid, // Add this if submissions are user-specific
       customerAvatar: findItemById(avatars, selectedAvatar) || null,
       ideaTracker: findItemById(adConcepts, selectedAdConcept) || null,
       massDesire: findItemById(massDesires, selectedMassDesire) || null,
@@ -239,40 +262,40 @@ export default function SubmissionsPage() {
       headlinePattern: findItemById(headlinePatterns, selectedHeadlinePattern) || null,
       mechanization: findItemById(mechanisms, selectedMechanism) || null,
       adCreation: findAdCreationById(adCreationEntries, selectedAdCreation) || null,
+      // submittedAt will be handled by serverTimestamp or existing value
     };
 
     try {
       let docId = editingSubmission?.firestoreId;
-      if (docId) {
+      let submissionTimestamp: Timestamp;
+
+      if (docId) { // Editing existing submission
+        submissionDataForFirestore.submittedAt = serverTimestamp(); // Or update a different field like 'updatedAt'
         const docRef = doc(db, "submissions", docId);
-        await updateDoc(docRef, firestoreCampaignData); // Note: submittedAt will update to server time if it was serverTimestamp()
+        await updateDoc(docRef, submissionDataForFirestore);
+        // For optimistic update, we'd get the timestamp after the update or use client's.
+        // For simplicity, we'll use client time if serverTimestamp was just set.
+        // A more robust solution might re-fetch the item or get the confirmed server timestamp.
+        submissionTimestamp = Timestamp.now(); // Approximation
         setLastFirestoreSubmissionId(docId);
-        toast({ title: 'Campaign Updated in Firestore!', description: `"${submissionTitle}" updated. Share link available.` });
-      } else {
-        const docRef = await addDoc(collection(db, "submissions"), firestoreCampaignData);
+        toast({ title: 'Campaign Updated in Firestore!', description: `"${submissionTitle}" updated.` });
+        console.log(`Submission ${docId} updated in Firestore.`);
+      } else { // Creating new submission
+        submissionDataForFirestore.submittedAt = serverTimestamp();
+        const docRef = await addDoc(collection(db, "submissions"), submissionDataForFirestore);
         docId = docRef.id;
+        submissionTimestamp = Timestamp.now(); // Approximation, server will set actual
         setLastFirestoreSubmissionId(docId);
-        toast({ title: 'Campaign Submitted to Firestore!', description: `"${submissionTitle}" saved with ID: ${docId}. Share link available.` });
+        toast({ title: 'Campaign Submitted to Firestore!', description: `"${submissionTitle}" saved.` });
+        console.log(`New submission ${docId} added to Firestore.`);
       }
       
-      const getLocalSubmittedAtISO = (): string => {
-          if (firestoreCampaignData.submittedAt instanceof Timestamp) {
-              return firestoreCampaignData.submittedAt.toDate().toISOString();
-          }
-          // If serverTimestamp was used, we won't know the exact time until Firestore confirms it.
-          // For local optimistic update, use client's current time for NEW entries, or existing for EDITED.
-          if (editingSubmission && editingSubmission.submittedAt) {
-            return editingSubmission.submittedAt instanceof Timestamp ? editingSubmission.submittedAt.toDate().toISOString() : editingSubmission.submittedAt;
-          }
-          return new Date().toISOString();
-      };
-
-
-      const localCampaignData: CompiledCampaignSubmission = {
-        id: editingSubmission?.id || String(Date.now()),
+      const newOrUpdatedSubmission: CompiledCampaignSubmission = {
+        id: editingSubmission?.id || docId, // Use existing local ID or new Firestore ID
+        firestoreId: docId,
         submissionTitle,
         submittedBy,
-        submittedAt: getLocalSubmittedAtISO(),
+        submittedAt: submissionTimestamp.toDate().toISOString(),
         customerAvatarId: selectedAvatar,
         ideaTrackerId: selectedAdConcept,
         massDesireId: selectedMassDesire,
@@ -281,23 +304,23 @@ export default function SubmissionsPage() {
         headlinePatternId: selectedHeadlinePattern,
         mechanizationId: selectedMechanism,
         adCreationId: selectedAdCreation,
-        firestoreId: docId,
-        // Populate with the actual data used for Firestore
-        customerAvatar: firestoreCampaignData.customerAvatar,
-        ideaTracker: firestoreCampaignData.ideaTracker,
-        massDesire: firestoreCampaignData.massDesire,
-        featuresToBenefits: firestoreCampaignData.featuresToBenefits,
-        creativeRoadmap: firestoreCampaignData.creativeRoadmap,
-        headlinePattern: firestoreCampaignData.headlinePattern,
-        mechanization: firestoreCampaignData.mechanization,
-        adCreation: firestoreCampaignData.adCreation,
+        customerAvatar: submissionDataForFirestore.customerAvatar,
+        ideaTracker: submissionDataForFirestore.ideaTracker,
+        massDesire: submissionDataForFirestore.massDesire,
+        featuresToBenefits: submissionDataForFirestore.featuresToBenefits,
+        creativeRoadmap: submissionDataForFirestore.creativeRoadmap,
+        headlinePattern: submissionDataForFirestore.headlinePattern,
+        mechanization: submissionDataForFirestore.mechanization,
+        adCreation: submissionDataForFirestore.adCreation,
       };
 
-      setCompiledSubmissions(prev =>
-        editingSubmission
-        ? prev.map(s => s.id === editingSubmission.id ? localCampaignData : s)
-        : [localCampaignData, ...prev]
-      );
+      setCompiledSubmissions(prev => {
+        const newArray = editingSubmission
+          ? prev.map(s => s.id === editingSubmission.id ? newOrUpdatedSubmission : s)
+          : [newOrUpdatedSubmission, ...prev];
+        // Re-sort as new/updated item might change order
+        return newArray.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+      });
 
       setShowForm(false);
       setEditingSubmission(null);
@@ -314,11 +337,13 @@ export default function SubmissionsPage() {
   async function handleDeleteSubmission(submission: CompiledCampaignSubmission) {
     const confirmed = window.confirm(`Are you sure you want to delete submission "${submission.submissionTitle}"? This will remove it from local storage and Firestore (if applicable). This cannot be undone.`);
     if (!confirmed) return;
+    console.log(`Attempting to delete submission. Local ID: ${submission.id}, Firestore ID: ${submission.firestoreId}. User UID: ${user?.uid || "No user"}`);
 
     if (submission.firestoreId) {
       try {
         await deleteDoc(doc(db, "submissions", submission.firestoreId));
         toast({ title: "Firestore Deletion Successful", description: `Submission "${submission.submissionTitle}" removed from Firestore.`});
+        console.log(`Submission ${submission.firestoreId} deleted from Firestore.`);
       } catch (error) {
         console.error("Error deleting submission from Firestore: ", error);
         toast({ title: "Firestore Deletion Failed", description: "Could not remove submission from database.", variant: "destructive" });
@@ -347,11 +372,7 @@ export default function SubmissionsPage() {
     });
   }
 
-  const sortedCompiledSubmissions = [...compiledSubmissions].sort((a, b) => {
-    const dateA = a.submittedAt instanceof Timestamp ? a.submittedAt.toDate() : new Date(a.submittedAt as string);
-    const dateB = b.submittedAt instanceof Timestamp ? b.submittedAt.toDate() : new Date(b.submittedAt as string);
-    return dateB.getTime() - dateA.getTime();
-  });
+  const sortedCompiledSubmissions = compiledSubmissions; // Already sorted by Firestore query or after edit/add
 
   function getSubmissionTiles(submission: CompiledCampaignSubmission): TileInfo[] {
     const tiles: TileInfo[] = [];
@@ -368,7 +389,7 @@ export default function SubmissionsPage() {
     }
     if (submission.featuresToBenefits) {
       tileValue = submission.featuresToBenefits.productFeature;
-      if (tileValue && tileValue.length > 15) { // Adjusted for typical tile width
+      if (tileValue && tileValue.length > 15) { 
         tileValue = tileValue.substring(0, 15) + '...';
       }
       tiles.push({ label: "Benefit", value: tileValue, icon: <Gift className="h-5 w-5"/>, included: true });
@@ -403,7 +424,7 @@ export default function SubmissionsPage() {
                         {showForm ? (editingSubmission ? 'Edit Campaign Submission' : 'New Campaign Submission') : 'Campaign Submissions'}
                     </CardTitle>
                     <CardDescription>
-                        {showForm ? 'Modify or compile elements for the campaign submission.' : 'Compile elements into a single campaign. Saved to Firestore & locally.'}
+                        {showForm ? 'Modify or compile elements for the campaign submission.' : 'Compile elements into a single campaign. Data synced with Firestore.'}
                     </CardDescription>
                 </div>
                 {!showForm ? (
@@ -471,7 +492,7 @@ export default function SubmissionsPage() {
                     Share link: <code className="bg-muted px-1 rounded text-xs">{typeof window !== 'undefined' ? window.location.origin : ''}/submission/{lastFirestoreSubmissionId}</code>
                     </p>
                     <Button variant="outline" size="sm" onClick={handleCopyLink} className="w-full sm:w-auto">
-                    <Copy className="mr-2 h-3 w-3"/> Copy Link
+                       <span><Copy className="mr-2 h-3 w-3"/> Copy Link</span>
                     </Button>
                 </div>
                 )}
@@ -484,10 +505,15 @@ export default function SubmissionsPage() {
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="font-headline text-xl flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary"/>Campaign Submissions Log</CardTitle>
-            <CardDescription>This is a list of submissions saved in your browser. Expand to view details or edit. (Firestore saved entries are also listed here).</CardDescription>
+            <CardDescription>This is a list of submissions. Expand to view details or edit.</CardDescription>
           </CardHeader>
           <CardContent>
-            {sortedCompiledSubmissions.length > 0 ? (
+            {isLoadingSubmissions ? (
+                 <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="ml-2 text-muted-foreground">Loading submissions...</p>
+                 </div>
+            ) : sortedCompiledSubmissions.length > 0 ? (
                 <Accordion type="single" collapsible className="w-full">
                 {sortedCompiledSubmissions.map(submission => {
                   const tiles = getSubmissionTiles(submission);
@@ -498,7 +524,7 @@ export default function SubmissionsPage() {
                         <span className="truncate pr-2 font-medium flex-grow">{submission.submissionTitle}</span>
                         <div className="flex flex-col items-start sm:items-center sm:flex-row flex-shrink-0 gap-x-2">
                             <span className="text-xs text-muted-foreground">
-                                By: {submission.submittedBy} on {new Date(submission.submittedAt instanceof Timestamp ? submission.submittedAt.toDate() : submission.submittedAt as string).toLocaleDateString()}
+                                By: {submission.submittedBy} on {new Date(submission.submittedAt).toLocaleDateString()}
                                 {submission.firestoreId && <span className="ml-2 text-green-600 font-medium">(DB)</span>}
                             </span>
                             <div className="flex items-center space-x-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity mt-1 sm:mt-0">
@@ -536,7 +562,7 @@ export default function SubmissionsPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={(e) => {
-                                        e.stopPropagation(); // Prevent accordion from toggling
+                                        e.stopPropagation(); 
                                         const link = `${window.location.origin}/submission/${submission.firestoreId}`;
                                         navigator.clipboard.writeText(link).then(() => {
                                             toast({ title: "Link Copied!", description: "Shareable link copied to clipboard." });
@@ -546,7 +572,7 @@ export default function SubmissionsPage() {
                                         });
                                     }}
                                 >
-                                    <Copy className="mr-1.5 h-3.5 w-3.5" /> Copy Link
+                                   <span><Copy className="mr-1.5 h-3.5 w-3.5" /> Copy Link</span>
                                 </Button>
                             </div>
                         )}
@@ -568,3 +594,4 @@ export default function SubmissionsPage() {
     </div>
   );
 }
+
