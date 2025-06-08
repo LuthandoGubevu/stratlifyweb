@@ -14,12 +14,12 @@ import Image from 'next/image';
 
 export interface CustomerAvatar { // Exported for use in Submissions page
   id: string;
-  name: string; 
-  demographics: string; 
-  psychographics: string; 
-  preferredChannels: string; 
-  tags: string[]; 
-  imageUrl?: string; 
+  name: string;
+  demographics: string;
+  psychographics: string;
+  preferredChannels: string;
+  tags: string[];
+  imageUrl?: string;
   createdAt: string;
 }
 
@@ -33,16 +33,23 @@ interface AvatarDisplayCardProps {
 }
 
 const AvatarDisplayCard: React.FC<AvatarDisplayCardProps> = ({ avatar, onEdit, onDelete }) => {
+  let resolvedSrc: string;
+  if (avatar.imageUrl && typeof avatar.imageUrl === 'string' && (avatar.imageUrl.startsWith('http://') || avatar.imageUrl.startsWith('https://'))) {
+    resolvedSrc = avatar.imageUrl;
+  } else {
+    resolvedSrc = 'https://placehold.co/64x64.png'; // Corrected placeholder and dimensions
+  }
+
   return (
     <Card className="flex flex-col h-full shadow-md hover:shadow-lg transition-shadow duration-200">
       <CardHeader>
         <div className="flex items-start space-x-4">
-          <Image 
-            src={avatar.imageUrl || `https://placehold.co/100x100.png?text=${avatar.name.charAt(0)}`} 
-            alt={avatar.name} 
-            width={64} height={64} 
+          <Image
+            src={resolvedSrc}
+            alt={avatar.name || 'User Avatar'} // Added fallback for alt text
+            width={64} height={64}
             className="rounded-lg object-cover border"
-            data-ai-hint="person profile" 
+            data-ai-hint="person profile"
           />
           <div className="flex-grow">
             <CardTitle className="font-headline text-lg mb-1 truncate" title={avatar.name}>
@@ -81,14 +88,14 @@ export default function CustomerAvatarsPage() {
   const [avatars, setAvatars] = useState<CustomerAvatar[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingAvatar, setEditingAvatar] = useState<CustomerAvatar | null>(null);
-  
+
   const [currentName, setCurrentName] = useState('');
   const [currentDemographics, setCurrentDemographics] = useState('');
   const [currentPsychographics, setCurrentPsychographics] = useState('');
   const [currentChannels, setCurrentChannels] = useState('');
   const [currentTags, setCurrentTags] = useState('');
   const [currentImageUrl, setCurrentImageUrl] = useState('');
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -133,7 +140,7 @@ export default function CustomerAvatarsPage() {
     setCurrentImageUrl(avatar.imageUrl || '');
     setShowForm(true);
   };
-  
+
   const handleBackToList = () => {
     setShowForm(false);
     setEditingAvatar(null);
@@ -147,7 +154,7 @@ export default function CustomerAvatarsPage() {
       return;
     }
     const tagsArray = currentTags.split(',').map(tag => tag.trim()).filter(tag => tag);
-    
+
     let updatedAvatars;
 
     if (editingAvatar) {
@@ -195,8 +202,8 @@ export default function CustomerAvatarsPage() {
     }
   };
 
-  const filteredAvatars = avatars.filter(avatar => 
-    Object.values(avatar).some(value => 
+  const filteredAvatars = avatars.filter(avatar =>
+    Object.values(avatar).some(value =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
     ) || avatar.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   ).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -235,7 +242,7 @@ export default function CustomerAvatarsPage() {
                     </div>
                     <div>
                         <Label htmlFor="imageUrl">Image URL (Optional)</Label>
-                        <Input id="imageUrl" value={currentImageUrl} onChange={(e) => setCurrentImageUrl(e.target.value)} placeholder="https://placehold.co/100x100.png" />
+                        <Input id="imageUrl" value={currentImageUrl} onChange={(e) => setCurrentImageUrl(e.target.value)} placeholder="https://placehold.co/64x64.png" />
                     </div>
                 </div>
                 <div>
@@ -264,7 +271,7 @@ export default function CustomerAvatarsPage() {
             <div className="mb-6">
                 <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
+                <Input
                     type="search"
                     placeholder="Search avatars..."
                     value={searchTerm}
@@ -276,8 +283,8 @@ export default function CustomerAvatarsPage() {
             {filteredAvatars.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredAvatars.map((avatar) => (
-                        <AvatarDisplayCard 
-                            key={avatar.id} 
+                        <AvatarDisplayCard
+                            key={avatar.id}
                             avatar={avatar}
                             onEdit={() => handleEditClick(avatar)}
                             onDelete={() => handleDeleteAvatar(avatar.id)}
